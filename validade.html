@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Validade de Produtos</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --background: #f8fafc;
+            --text: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        /* Formulário */
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            padding: 11px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Tabela e Filtros */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        /* Status Badges */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef9c3; color: #a16207; }
+        .badge-danger { background: #fee2e2; color: #b91c1c; }
+
+        .btn-delete {
+            background-color: var(--danger);
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        .btn-delete:hover {
+            background-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Controle de Validade</h1>
+        <p>Gerencie o estoque e evite o desperdício de produtos</p>
+    </header>
+
+    <!-- Formulário de Cadastro -->
+    <div class="form-container">
+        <form id="productForm" class="form-grid">
+            <div class="form-group">
+                <label for="name">Nome do Produto</label>
+                <input type="text" id="name" required placeholder="Ex: Leite Integral">
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantidade</label>
+                <input type="number" id="quantity" min="1" required placeholder="Ex: 10">
+            </div>
+            <div class="form-group">
+                <label for="expiryDate">Data de Vencimento</label>
+                <input type="date" id="expiryDate" required>
+            </div>
+            <button type="submit">Adicionar</button>
+        </form>
+    </div>
+
+    <!-- Tabela de Produtos -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Qtd.</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="productTableBody">
+                <!-- Inserido dinamicamente via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Gerenciador de Estado do App
+    const productForm = document.getElementById('productForm');
+    const productTableBody = document.getElementById('productTableBody');
+
+    // Carregar produtos salvos ou iniciar lista vazia
+    let products = JSON.parse(localStorage.getItem('validade_produtos')) || [];
+
+    // Formata a data de YYYY-MM-DD para DD/MM/YYYY
+    function formatDate(dateString) {
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+    }
+
+    // Calcula os dias restantes e gera o status
+    function getStatusInfo(expiryDateString) {
+        const today = new Date();
+        today.setHours(0,0,0,0); // Zera as horas para comparação justa
+        
+        const expiryDate = new Date(expiryDateString);
+        expiryDate.setHours(0,0,0,0);
+        
+        // Diferença em milissegundos convertida para dias
+        const diffTime = expiryDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            return { text: 'Vencido', class: 'badge-danger' };
+        } else if (diffDays <= 7) {
+            return { text: `Vence em ${diffDays} dia(s)`, class: 'badge-warning' };
+        } else {
+            return { text: 'Em dia', class: 'badge-success' };
+        }
+    }
+
+    // Renderiza os produtos na tabela
+    function renderProducts() {
+        productTableBody.innerHTML = '';
+
+        if (products.length === 0) {
+            productTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">Nenhum produto cadastrado.</td></tr>`;
+            return;
+        }
+
+        // Ordena por data de vencimento (mais próximos primeiro)
+        products.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+
+        products.forEach((product, index) => {
+            const status = getStatusInfo(product.expiryDate);
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <strong><td>${product.name}</td></strong>
+                <td>${product.quantity}</td>
+                <td>${formatDate(product.expiryDate)}</td>
+                <td><span class="badge ${status.class}">${status.text}</span></td>
+                <td><button class="btn-delete" onclick="deleteProduct(${index})">Excluir</button></td>
+            `;
+            productTableBody.appendChild(tr);
+        });
+    }
+
+    // Salva a lista no LocalStorage
+    function saveToStorage() {
+        localStorage.setItem('validade_produtos', JSON.stringify(products));
+    }
+
+    // Adiciona um novo produto
+    productForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const quantity = document.getElementById('quantity').value;
+        const expiryDate = document.getElementById('expiryDate').value;
+
+        products.push({ name, quantity, expiryDate });
+        
+        saveToStorage();
+        renderProducts();
+        productForm.reset();
+    });
+
+    // Remove um produto da lista
+    window.deleteProduct = function(index) {
+        if(confirm('Deseja realmente excluir este produto?')) {
+            products.splice(index, 1);
+            saveToStorage();
+            renderProducts();
+        }
+    }
+
+    // Inicializa a tabela na primeira execução
+    renderProducts();
+</script>
+
+</body>
+</html>
