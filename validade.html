@@ -1,674 +1,270 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlueSoft ERP - Gestão Integrada de Estoque & Perdas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
-  <style>
-    :root {
-      --primary: #1e3a8a;
-      --primary-light: #3b82f6;
-      --primary-dark: #1e293b;
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --danger: #ef4444;
-      --danger-bg: #fef2f2;
-      --warning: #f59e0b;
-      --warning-bg: #fffbeb;
-      --success: #10b981;
-      --success-bg: #ecfdf5;
-      --radius: 8px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Validade de Produtos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', sans-serif;
-    }
+        body {
+            background-color: #f4f6f9;
+            padding: 20px;
+            color: #333;
+        }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
 
-    /* Sidebar */
-    aside {
-      width: 250px;
-      background-color: var(--primary-dark);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      padding: 20px 0;
-      flex-shrink: 0;
-    }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
 
-    .brand {
-      padding: 0 20px 20px;
-      font-size: 1.25rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      color: #38bdf8;
-    }
+        /* Formulário */
+        .form-cadastro {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;
+            gap: 15px;
+            align-items: flex-end;
+        }
 
-    nav {
-      margin-top: 20px;
-      flex-grow: 1;
-    }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
 
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
 
-    .nav-item:hover, .nav-item.active {
-      color: #fff;
-      background-color: rgba(255, 255, 255, 0.05);
-      border-left: 4px solid var(--primary-light);
-    }
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
 
-    /* App Container */
-    .app-container {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+        button {
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.2s;
+            height: 41px;
+        }
 
-    /* Header */
-    header {
-      background-color: var(--surface);
-      height: 64px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-    }
+        button:hover {
+            background-color: #219653;
+        }
 
-    .search-bar {
-      display: flex;
-      align-items: center;
-      background-color: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 6px 12px;
-      width: 320px;
-      gap: 8px;
-    }
+        /* Tabela e Alertas */
+        .tabela-container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
 
-    .search-bar input {
-      border: none;
-      background: transparent;
-      outline: none;
-      width: 100%;
-      font-size: 0.875rem;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
 
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #edf2f7;
+        }
 
-    .avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background-color: var(--primary-light);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-    }
+        th {
+            background-color: #f8f9fa;
+            color: #718096;
+            font-weight: 600;
+        }
 
-    /* Main Content */
-    main {
-      padding: 24px;
-      overflow-y: auto;
-      flex-grow: 1;
-    }
+        .status-vencido {
+            background-color: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+        }
 
-    .page-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
+        .status-alerta {
+            background-color: #fffde7;
+            color: #f57f17;
+            font-weight: bold;
+        }
 
-    /* KPI Cards */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
+        .status-ok {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
 
-    .kpi-card {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
+        .btn-excluir {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+            height: auto;
+        }
 
-    .kpi-title {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-    }
-
-    .kpi-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-
-    .kpi-card.danger { border-left: 4px solid var(--danger); }
-    .kpi-card.warning { border-left: 4px solid var(--warning); }
-    .kpi-card.primary { border-left: 4px solid var(--primary-light); }
-    .kpi-card.success { border-left: 4px solid var(--success); }
-
-    /* Actions Panel */
-    .actions-panel {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 24px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    /* Controls & Forms */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      font-weight: 500;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .btn-primary { background-color: var(--primary-light); color: white; }
-    .btn-primary:hover { background-color: #2563eb; }
-    
-    .btn-danger { background-color: var(--danger); color: white; }
-    .btn-danger:hover { background-color: #dc2626; }
-
-    .btn-outline { background-color: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { background-color: var(--bg); }
-
-    /* Table */
-    .table-container {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.875rem;
-    }
-
-    th {
-      background-color: #f1f5f9;
-      padding: 12px 16px;
-      font-weight: 600;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-    }
-
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    tr:last-child td { border-bottom: none; }
-
-    tr:hover { background-color: #f8fafc; }
-
-    /* Status Badges */
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .badge-ok { background-color: var(--success-bg); color: var(--success); }
-    .badge-warning { background-color: var(--warning-bg); color: var(--warning); }
-    .badge-danger { background-color: var(--danger-bg); color: var(--danger); }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal {
-      background: var(--surface);
-      border-radius: var(--radius);
-      width: 100%;
-      max-width: 500px;
-      padding: 24px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .modal-title { font-size: 1.125rem; font-weight: 600; }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin-bottom: 6px;
-    }
-
-    .form-group input, .form-group select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      outline: none;
-      font-size: 0.875rem;
-    }
-
-    .form-group input:focus, .form-group select:focus {
-      border-color: var(--primary-light);
-    }
-
-    .form-row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 24px;
-    }
-  </style>
+        .btn-excluir:hover {
+            background-color: #c0392b;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Sidebar Nav -->
-  <aside>
-    <div class="brand">
-      <i data-lucide="box"></i> BlueSoft ERP
-    </div>
-    <nav>
-      <a class="nav-item active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
-      <a class="nav-item"><i data-lucide="package"></i> Estoque Atual</a>
-      <a class="nav-item"><i data-lucide="alert-triangle"></i> Rupturas</a>
-      <a class="nav-item"><i data-lucide="calendar-x"></i> Validades</a>
-      <a class="nav-item"><i data-lucide="trending-down"></i> Baixas e Perdas</a>
-    </nav>
-  </aside>
+<div class="container">
+    <h1>Controle de Validade</h1>
 
-  <!-- App Body -->
-  <div class="app-container">
-    <header>
-      <div class="search-bar">
-        <i data-lucide="search" size="18"></i>
-        <input type="text" id="searchInput" placeholder="Buscar por código ou descrição..." onkeyup="filterTable()">
-      </div>
-      <div class="user-profile">
-        <div>
-          <div style="font-size: 0.875rem; font-weight: 600;">Operador Estoque</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">Loja 01 - Centro</div>
+    <!-- Formulário de Cadastro -->
+    <form class="form-cadastro" id="formProduto">
+        <div class="form-group">
+            <label id="lblProduto" for="produto">Produto</label>
+            <input type="text" id="produto" required placeholder="Ex: Leite Integral">
         </div>
-        <div class="avatar">OP</div>
-      </div>
-    </header>
+        <div class="form-group">
+            <label id="lblQuantidade" for="quantidade">Quantidade</label>
+            <input type="number" id="quantidade" min="1" required placeholder="Ex: 10">
+        </div>
+        <div class="form-group">
+            <label id="lblValidade" for="validade">Data de Validade</label>
+            <input type="date" id="validade" required>
+        </div>
+        <button type="submit">Adicionar</button>
+    </form>
 
-    <main>
-      <h1 class="page-title">Controle Integrado de Estoque</h1>
-
-      <!-- KPI Metrics -->
-      <div class="kpi-grid">
-        <div class="kpi-card primary">
-          <span class="kpi-title">Total de Itens</span>
-          <span class="kpi-value" id="kpiTotalItens">0</span>
-        </div>
-        <div class="kpi-card danger">
-          <span class="kpi-title">Itens em Ruptura</span>
-          <span class="kpi-value" id="kpiRupturas">0</span>
-        </div>
-        <div class="kpi-card warning">
-          <span class="kpi-title">Vencimento Próximo (15d)</span>
-          <span class="kpi-value" id="kpiVencendo">0</span>
-        </div>
-        <div class="kpi-card danger">
-          <span class="kpi-title">Perda Acumulada</span>
-          <span class="kpi-value" id="kpiPerdaTotal">R$ 0,00</span>
-        </div>
-      </div>
-
-      <!-- Action Panel -->
-      <div class="actions-panel">
-        <button class="btn btn-primary" onclick="openModal('modalProduto')">
-          <i data-lucide="plus"></i> Novo Produto
-        </button>
-        <button class="btn btn-danger" onclick="openModal('modalBaixa')">
-          <i data-lucide="minus-circle"></i> Registrar Baixa / Perda
-        </button>
-      </div>
-
-      <!-- Table Section -->
-      <div class="table-container">
+    <!-- Tabela de Produtos -->
+    <div class="tabela-container">
         <table>
-          <thead>
-            <tr>
-              <th>Cód.</th>
-              <th>Descrição</th>
-              <th>Preço Un.</th>
-              <th>Estoque Qtd.</th>
-              <th>Est. Mínimo</th>
-              <th>Validade</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="inventoryTable">
-            <!-- Dynamic Content -->
-          </tbody>
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Validade</th>
+                    <th>Status / Dias Restantes</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaProdutos">
+                <!-- Inserido dinamicamente via JS -->
+            </tbody>
         </table>
-      </div>
-    </main>
-  </div>
-
-  <!-- Modal Cadastro Produto -->
-  <div class="modal-overlay" id="modalProduto">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 class="modal-title">Cadastrar / Modificar Produto</h3>
-        <i data-lucide="x" style="cursor:pointer;" onclick="closeModal('modalProduto')"></i>
-      </div>
-      <form id="formProduto" onsubmit="salvarProduto(event)">
-        <div class="form-group">
-          <label>Descrição do Produto</label>
-          <input type="text" id="prodNome" required placeholder="Ex: Leite Integral 1L">
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="flex:1;">
-            <label>Preço (R$)</label>
-            <input type="number" step="0.01" id="prodPreco" required placeholder="0.00">
-          </div>
-          <div class="form-group" style="flex:1;">
-            <label>Qtd. Inicial</label>
-            <input type="number" id="prodQtd" required placeholder="0">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="flex:1;">
-            <label>Qtd. Mínima (Alerta Ruptura)</label>
-            <input type="number" id="prodMin" required placeholder="5">
-          </div>
-          <div class="form-group" style="flex:1;">
-            <label>Data de Validade</label>
-            <input type="date" id="prodValidade" required>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('modalProduto')">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Salvar Produto</button>
-        </div>
-      </form>
     </div>
-  </div>
+</div>
 
-  <!-- Modal Baixa / Perda -->
-  <div class="modal-overlay" id="modalBaixa">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 class="modal-title">Registrar Baixa por Perda</h3>
-        <i data-lucide="x" style="cursor:pointer;" onclick="closeModal('modalBaixa')"></i>
-      </div>
-      <form id="formBaixa" onsubmit="processarBaixa(event)">
-        <div class="form-group">
-          <label>Produto</label>
-          <select id="baixaProdutoSelect" required></select>
-        </div>
-        <div class="form-group">
-          <label>Quantidade para Dar Baixa</label>
-          <input type="number" id="baixaQtd" min="1" required placeholder="1">
-        </div>
-        <div class="form-group">
-          <label>Motivo da Baixa</label>
-          <select id="baixaMotivo" required>
-            <option value="Vencimento">Validade Vencida</option>
-            <option value="Avaria">Avaria / Danificado</option>
-            <option value="Roubo">Furtos / Roubo</option>
-          </select>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('modalBaixa')">Cancelar</button>
-          <button type="submit" class="btn btn-danger">Confirmar Baixa</button>
-        </div>
-      </form>
-    </div>
-  </div>
+<script>
+    // Carregar produtos salvos ou iniciar lista vazia
+    let produtos = JSON.parse(localStorage.getItem('produtos_validade')) || [];
 
-  <script>
-    // System Data Initialization
-    let produtos = [
-      { id: 101, nome: "Iogurte Natural 170g", preco: 3.50, quantidade: 18, min: 10, validade: "2026-03-20" },
-      { id: 102, nome: "Pão de Forma Integral", preco: 7.99, quantidade: 2, min: 5, validade: "2026-03-12" },
-      { id: 103, nome: "Queijo Mussarela Fatiado", preco: 14.50, quantidade: 0, min: 8, validade: "2026-03-25" },
-      { id: 104, nome: "Carne Moída Patinho 500g", preco: 22.00, quantidade: 15, min: 4, validade: "2026-03-11" }
-    ];
+    const formProduto = document.getElementById('formProduto');
+    const listaProdutos = document.getElementById('listaProdutos');
 
-    let totalPerdasFinanceiras = 0;
+    // Salvar e atualizar visualização
+    function atualizarPainel() {
+        localStorage.setItem('produtos_validade', JSON.stringify(produtos));
+        renderizarProdutos();
+    }
 
-    // Core Dashboard Rendering
-    function render() {
-      const tableBody = document.getElementById('inventoryTable');
-      const selectBaixa = document.getElementById('baixaProdutoSelect');
-      
-      tableBody.innerHTML = '';
-      selectBaixa.innerHTML = '';
+    // Adicionar novo produto
+    formProduto.addEventListener('submit', (e) => {
+        e.preventDefault();
 
-      let totalItens = 0;
-      let totalRupturas = 0;
-      let totalVencendo = 0;
+        const novoProduto = {
+            id: Date.now(),
+            nome: document.getElementById('produto').value,
+            quantidade: document.getElementById('quantidade').value,
+            validade: document.getElementById('validade').value
+        };
 
-      const hoje = new Date();
-      
-      produtos.forEach(prod => {
-        totalItens += prod.quantidade;
+        produtos.push(novoProduto);
+        atualizarPainel();
+        formProduto.reset();
+    });
 
-        // Check Validity Status
-        const dataVal = new Date(prod.validade);
-        const diffDias = Math.ceil((dataVal - hoje) / (1000 * 60 * 60 * 24));
-        
-        let statusBadge = '';
-        
-        if (prod.quantidade === 0) {
-          totalRupturas++;
-          statusBadge = `<span class="badge badge-danger">Ruptura (Sem Estoque)</span>`;
-        } else if (prod.quantidade <= prod.min) {
-          statusBadge = `<span class="badge badge-warning">Estoque Baixo</span>`;
-        } else {
-          statusBadge = `<span class="badge badge-ok">Normal</span>`;
+    // Excluir produto
+    function excluirProduto(id) {
+        produtos = produtos.filter(p => p.id !== id);
+        atualizarPainel();
+    }
+
+    // Formatar data para padrão brasileiro (DD/MM/AAAA)
+    function formatarData(dataString) {
+        const [ano, mes, dia] = dataString.split('-');
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    // Renderizar a tabela na tela
+    function renderizarProdutos() {
+        listaProdutos.innerHTML = '';
+
+        if (produtos.length === 0) {
+            listaProdutos.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#718096;">Nenhum produto cadastrado.</td></tr>`;
+            return;
         }
 
-        if (diffDias <= 15 && prod.quantidade > 0) {
-          totalVencendo++;
-          if (diffDias <= 0) {
-            statusBadge = `<span class="badge badge-danger">Vencido</span>`;
-          } else if (prod.quantidade > prod.min) {
-            statusBadge = `<span class="badge badge-warning">Vencimento Próximo</span>`;
-          }
-        }
+        // Ordenar do mais próximo de vencer para o mais distante
+        produtos.sort((a, b) => new Date(a.validade) - new Date(b.validade));
 
-        // Table Rows
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${prod.id}</td>
-          <td><strong>${prod.nome}</strong></td>
-          <td>R$ ${prod.preco.toFixed(2)}</td>
-          <td>${prod.quantidade}</td>
-          <td>${prod.min}</td>
-          <td>${formatarData(prod.validade)}</td>
-          <td>${statusBadge}</td>
-          <td>
-            <button class="btn btn-outline" style="padding:4px 8px;" onclick="quickBaixa(${prod.id})">
-              <i data-lucide="minus" size="14"></i> Baixa
-            </button>
-          </td>
-        `;
-        tableBody.appendChild(tr);
+        produtos.forEach(p => {
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0);
+            const dataValidade = new Date(p.validade);
+            dataValidade.setHours(24,0,0,0); // Ajuste de fuso horário local
 
-        // Populate Select for Baixas
-        if (prod.quantidade > 0) {
-          const opt = document.createElement('option');
-          opt.value = prod.id;
-          opt.textContent = `${prod.nome} (Qtd: ${prod.quantidade})`;
-          selectBaixa.appendChild(opt);
-        }
-      });
+            // Calcular diferença de dias
+            const diferencaTempo = dataValidade - hoje;
+            const diferencaDias = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
 
-      // Update KPI
-      document.getElementById('kpiTotalItens').innerText = totalItens;
-      document.getElementById('kpiRupturas').innerText = totalRupturas;
-      document.getElementById('kpiVencendo').innerText = totalVencendo;
-      document.getElementById('kpiPerdaTotal').innerText = `R$ ${totalPerdasFinanceiras.toFixed(2)}`;
+            let classeStatus = 'status-ok';
+            let textoStatus = `${diferencaDias} dias restantes`;
 
-      lucide.createIcons();
+            if (diferencaDias < 0) {
+                classeStatus = 'status-vencido';
+                textoStatus = `VENCIDO (há ${Math.abs(diferencaDias)} dias)`;
+            } else if (diferencaDias === 0) {
+                classeStatus = 'status-alerta';
+                textoStatus = 'Vence HOJE!';
+            } else if (diferencaDias <= 7) {
+                classeStatus = 'status-alerta';
+                textoStatus = `Atenção: vence em ${diferencaDias} dias`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = classeStatus;
+            tr.innerHTML = `
+                <td><strong>${p.nome}</strong></td>
+                <td>${p.quantidade}</td>
+                <td>${formatarData(p.validade)}</td>
+                <td>${textoStatus}</td>
+                <td><button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button></td>
+            `;
+            listaProdutos.appendChild(tr);
+        });
     }
 
-    // Modal Control
-    function openModal(id) { document.getElementById(id).classList.add('active'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    // Inicializar na primeira execução
+    renderizarProdutos();
+</script>
 
-    // Logic: Save Product
-    function salvarProduto(e) {
-      e.preventDefault();
-      const novo = {
-        id: Math.floor(100 + Math.random() * 900),
-        nome: document.getElementById('prodNome').value,
-        preco: parseFloat(document.getElementById('prodPreco').value),
-        quantidade: parseInt(document.getElementById('prodQtd').value),
-        min: parseInt(document.getElementById('prodMin').value),
-        validade: document.getElementById('prodValidade').value
-      };
-      
-      produtos.push(novo);
-      closeModal('modalProduto');
-      document.getElementById('formProduto').reset();
-      render();
-    }
-
-    // Logic: Write-off / Loss
-    function processarBaixa(e) {
-      e.preventDefault();
-      const prodId = parseInt(document.getElementById('baixaProdutoSelect').value);
-      const qtdBaixa = parseInt(document.getElementById('baixaQtd').value);
-      
-      const prod = produtos.find(p => p.id === prodId);
-
-      if (prod) {
-        if (qtdBaixa > prod.quantidade) {
-          alert("Quantidade de baixa maior do que a disponível em estoque!");
-          return;
-        }
-
-        prod.quantidade -= qtdBaixa;
-        const valorPerda = qtdBaixa * prod.preco;
-        totalPerdasFinanceiras += valorPerda;
-
-        closeModal('modalBaixa');
-        document.getElementById('formBaixa').reset();
-        render();
-      }
-    }
-
-    function quickBaixa(id) {
-      document.getElementById('modalBaixa').classList.add('active');
-      document.getElementById('baixaProdutoSelect').value = id;
-    }
-
-    // Search/Filter Functionality
-    function filterTable() {
-      const term = document.getElementById('searchInput').value.toLowerCase();
-      const rows = document.querySelectorAll('#inventoryTable tr');
-      
-      rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(term) ? '' : 'none';
-      });
-    }
-
-    // Helpers
-    function formatarData(dataStr) {
-      const parts = dataStr.split('-');
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-
-    // Initialize System
-    window.onload = () => {
-      render();
-    };
-  </script>
 </body>
 </html>
