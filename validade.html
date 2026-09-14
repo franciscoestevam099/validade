@@ -1,107 +1,171 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Validade de Produtos</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Estoque</title>
+  <style>
+    /* Configurações Globais */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+    }
 
-        body {
-            background-color: #f4f6f9;
-            padding: 20px;
-            color: #333;
-        }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+    h1 {
+      margin-top: 0;
+      color: #2c3e50;
+      border-bottom: 2px solid #ecf0f1;
+      padding-bottom: 10px;
+    }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
+    /* Estilização da Tabela */
+    .tabela-estoque {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      text-align: left;
+    }
 
-        /* Formulário */
-        .form-cadastro {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;
-            gap: 15px;
-            align-items: flex-end;
-        }
+    .tabela-estoque th, 
+    .tabela-estoque td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
+    /* Cabeçalho da Tabela */
+    .tabela-estoque th {
+      background-color: #2c3e50;
+      color: #ffffff;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
 
-        .form-group label {
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 14px;
-        }
+    /* Linhas Alternadas (Zebra) */
+    .tabela-estoque tbody tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
 
-        .form-group input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
+    /* Efeito de Hover na linha */
+    .tabela-estoque tbody tr:hover {
+      background-color: #f1f3f5;
+    }
 
-        button {
-            padding: 10px 20px;
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            transition: background 0.2s;
-            height: 41px;
-        }
+    /* Alertas de Validade e Perda */
+    .status-alerta {
+      color: #e74c3c;
+      font-weight: bold;
+      background-color: #fce8e6;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
 
-        button:hover {
-            background-color: #219653;
-        }
+    .status-ok {
+      color: #27ae60;
+      font-weight: bold;
+    }
 
-        /* Tabela e Alertas */
-        .tabela-container {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
+    /* Estilização dos Botões de Ação */
+    .btn-baixa {
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
+    .btn-baixa:hover {
+      background-color: #d35400;
+    }
 
-        th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #edf2f7;
-        }
+    .btn-perda {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+      margin-right: 5px;
+    }
 
-        th {
-            background-color: #f8f9fa;
-            color: #718096;
-            font-weight: 600;
-        }
+    .btn-perda:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
 
+  <div class="container">
+    <h1>Controle de Estoque</h1>
+    
+    <table class="tabela-estoque">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Produto</th>
+          <th>Validade</th>
+          <th>Qtd. Estoque</th>
+          <th>Perdas</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>#1001</td>
+          <td>Leite Integral 1L</td>
+          <td><span class="status-alerta">18/09/2026</span></td>
+          <td>45 un</td>
+          <td>2 un</td>
+          <td>
+            <button class="btn-perda" title="Registrar Perda">Perda</button>
+            <button class="btn-baixa" title="Dar Baixa no Estoque">Dar Baixa</button>
+          </td>
+        </tr>
+        <tr>
+          <td>#1002</td>
+          <td>Arroz Agulhinha 5kg</td>
+          <td><span class="status-ok">12/03/2027</span></td>
+          <td>120 un</td>
+          <td>0 un</td>
+          <td>
+            <button class="btn-perda" title="Registrar Perda">Perda</button>
+            <button class="btn-baixa" title="Dar Baixa no Estoque">Dar Baixa</button>
+          </td>
+        </tr>
+        <tr>
+          <td>#1003</td>
+          <td>Iogurte Natural 500g</td>
+          <td><span class="status-alerta">15/09/2026</span></td>
+          <td>12 un</td>
+          <td>5 un</td>
+          <td>
+            <button class="btn-perda" title="Registrar Perda">Perda</button>
+            <button class="btn-baixa" title="Dar Baixa no Estoque">Dar Baixa</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
         .status-vencido {
             background-color: #ffebee;
             color: #c62828;
