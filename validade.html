@@ -1,235 +1,222 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Estoque</title>
-  <style>
-    /* Configurações Globais */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f6f9;
-      color: #333;
-      padding: 20px;
-      margin: 0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Validade e Estoque</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #c0392b;
+            --light: #ecf0f1;
+            --dark: #34495e;
+        }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background-color: #fff;
-      padding: 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-    h1 {
-      margin-top: 0;
-      color: #2c3e50;
-      border-bottom: 2px solid #ecf0f1;
-      padding-bottom: 10px;
-    }
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            padding: 20px;
+        }
 
-    /* Estilização da Tabela */
-    .tabela-estoque {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      text-align: left;
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-    .tabela-estoque th, 
-    .tabela-estoque td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #e0e0e0;
-    }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary);
+        }
 
-    /* Cabeçalho da Tabela */
-    .tabela-estoque th {
-      background-color: #2c3e50;
-      color: #ffffff;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 14px;
-    }
+        h1 { color: var(--primary); }
 
-    /* Linhas Alternadas (Zebra) */
-    .tabela-estoque tbody tr:nth-child(even) {
-      background-color: #f8f9fa;
-    }
+        /* Formulário */
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
 
-    /* Efeito de Hover na linha */
-    .tabela-estoque tbody tr:hover {
-      background-color: #f1f3f5;
-    }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
 
-    /* Alertas de Validade e Perda */
-    .status-alerta {
-      color: #e74c3c;
-      font-weight: bold;
-      background-color: #fce8e6;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
 
-    .status-ok {
-      color: #27ae60;
-      font-weight: bold;
-    }
+        label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
 
-    /* Estilização dos Botões de Ação */
-    .btn-baixa {
-      background-color: #e67e22;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.2s;
-    }
+        input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
 
-    .btn-baixa:hover {
-      background-color: #d35400;
-    }
-
-    .btn-perda {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.2s;
-      margin-right: 5px;
-    }
-
-    .btn-perda:hover {
-      background-color: #c0392b;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <h1>Controle de Estoque</h1>
-    
-    <table class="tabela-estoque">
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Produto</th>
-          <th>Validade</th>
-          <th>Qtd. Estoque</th>
-          <th>Perdas</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>#1001</td>
-          <td>Leite Integral 1L</td>
-          <td><span class="status-alerta">18/09/2026</span></td>
-          <td>45 un</td>
-          <td>2 un</td>
-          <td>
-            <button class="btn-perda" title="Registrar Perda">Perda</button>
-            <button class="btn-baixa" title="Dar Baixa no Estoque">Dar Baixa</button>
-          </td>
-        </tr>
-        <tr>
-          <td>#1002</td>
-          <td>Arroz Agulhinha 5kg</td>
-          <td><span class="status-ok">12/03/2027</span></td>
-          <td>120 un</td>
-          <td>0 un</td>
-          <td>
-            <button class="btn-perda" title="Registrar Perda">Perda</button>
-            <button class="btn-baixa" title="Dar Baixa no Estoque">Dar Baixa</button>
-          </td>
-        </tr>
-        <tr>
-          <td>#1003</td>
-          <td>Iogurte Natural 500g</td>
-          <td><span class="status-alerta">15/09/2026</span></td>
-          <td>12 un</td>
-          <td>5 un</td>
-          <td>
-            <button class="btn-perda" title="Registrar Perda">Perda</button>
-            <button class="btn-baixa" title="Dar Baixa no Estoque">Dar Baixa</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-</body>
-</html>
-        .status-vencido {
-            background-color: #ffebee;
-            color: #c62828;
+        button {
+            cursor: pointer;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
             font-weight: bold;
+            transition: background 0.2s;
         }
 
-        .status-alerta {
-            background-color: #fffde7;
-            color: #f57f17;
-            font-weight: bold;
+        .btn-add {
+            background-color: var(--success);
+            color: white;
+            align-self: flex-end;
+            height: 41px;
         }
 
-        .status-ok {
-            background-color: #e8f5e9;
-            color: #2e7d32;
+        .btn-add:hover { background-color: #219653; }
+
+        .btn-print {
+            background-color: var(--primary);
+            color: white;
+            margin-bottom: 20px;
         }
 
-        .btn-excluir {
-            background-color: #e74c3c;
-            padding: 5px 10px;
+        .btn-print:hover { background-color: #1a252f; }
+
+        /* Tabela e Ações */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        tr:hover { background-color: #f9f9f9; }
+
+        /* Status de Validade */
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 12px;
-            height: auto;
+            font-weight: bold;
+            color: white;
+            display: inline-block;
         }
 
-        .btn-excluir:hover {
-            background-color: #c0392b;
+        .status-vencido { background-color: var(--danger); }
+        .status-alerta { background-color: var(--warning); }
+        .status-ok { background-color: var(--success); }
+
+        /* Ações do Estoque */
+        .actions-cell {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-action {
+            padding: 5px 8px;
+            font-size: 12px;
+            color: white;
+        }
+
+        .btn-baixa { background-color: #2980b9; }
+        .btn-perda { background-color: #e67e22; }
+        .btn-del { background-color: var(--danger); }
+
+        /* Estilos Exclusivos para Impressão */
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+                padding: 0;
+            }
+            .form-container, .btn-print, .actions-cell, th:last-child, td:last-child {
+                display: none !important; /* Esconde formulário, botão de imprimir e coluna de ações */
+            }
+            .container { width: 100%; }
+            table { border: 1px solid #000; }
+            th { background-color: #ddd !important; color: #000 !important; }
+            td, th { border: 1px solid #000; padding: 8px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Controle de Validade</h1>
+    <header>
+        <h1>Controle de Estoque e Validade</h1>
+    </header>
+
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir Relatório</button>
 
     <!-- Formulário de Cadastro -->
-    <form class="form-cadastro" id="formProduto">
-        <div class="form-group">
-            <label id="lblProduto" for="produto">Produto</label>
-            <input type="text" id="produto" required placeholder="Ex: Leite Integral">
-        </div>
-        <div class="form-group">
-            <label id="lblQuantidade" for="quantidade">Quantidade</label>
-            <input type="number" id="quantidade" min="1" required placeholder="Ex: 10">
-        </div>
-        <div class="form-group">
-            <label id="lblValidade" for="validade">Data de Validade</label>
-            <input type="date" id="validade" required>
-        </div>
-        <button type="submit">Adicionar</button>
-    </form>
+    <div class="form-container">
+        <form id="productForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="pName">Nome do Produto</label>
+                    <input type="text" id="pName" required placeholder="Ex: Leite Integral">
+                </div>
+                <div class="form-group">
+                    <label for="pQty">Quantidade em Estoque</label>
+                    <input type="number" id="pQty" min="0" required placeholder="Ex: 50">
+                </div>
+                <div class="form-group">
+                    <label for="pDate">Data de Validade</label>
+                    <input type="date" id="pDate" required>
+                </div>
+                <button type="submit" class="btn-add">Adicionar Produto</button>
+            </div>
+        </form>
+    </div>
 
     <!-- Tabela de Produtos -->
-    <div class="tabela-container">
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
                     <th>Produto</th>
-                    <th>Quantidade</th>
+                    <th>Qtd Atual</th>
                     <th>Validade</th>
-                    <th>Status / Dias Restantes</th>
-                    <th>Ações</th>
+                    <th>Status</th>
+                    <th class="actions-head">Ações de Estoque</th>
                 </tr>
             </thead>
-            <tbody id="listaProdutos">
+            <tbody id="productTableBody">
                 <!-- Inserido dinamicamente via JS -->
             </tbody>
         </table>
@@ -237,98 +224,111 @@
 </div>
 
 <script>
-    // Carregar produtos salvos ou iniciar lista vazia
-    let produtos = JSON.parse(localStorage.getItem('produtos_validade')) || [];
+    // Inicialização dos dados pegando do LocalStorage (ou array vazio)
+    let products = JSON.parse(localStorage.getItem('validades_estoque')) || [];
 
-    const formProduto = document.getElementById('formProduto');
-    const listaProdutos = document.getElementById('listaProdutos');
+    const productForm = document.getElementById('productForm');
+    const tableBody = document.getElementById('productTableBody');
 
-    // Salvar e atualizar visualização
-    function atualizarPainel() {
-        localStorage.setItem('produtos_validade', JSON.stringify(produtos));
-        renderizarProdutos();
+    // Salvar no LocalStorage
+    function saveToStorage() {
+        localStorage.setItem('validades_estoque', JSON.stringify(products));
+        renderProducts();
     }
 
-    // Adicionar novo produto
-    formProduto.addEventListener('submit', (e) => {
+    // Submit do formulário de cadastro
+    productForm.addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        const name = document.getElementById('pName').value;
+        const qty = parseInt(document.getElementById('pQty').value);
+        const date = document.getElementById('pDate').value;
 
-        const novoProduto = {
+        const newProduct = {
             id: Date.now(),
-            nome: document.getElementById('produto').value,
-            quantidade: document.getElementById('quantidade').value,
-            validade: document.getElementById('validade').value
+            name: name,
+            qty: qty,
+            date: date
         };
 
-        produtos.push(novoProduto);
-        atualizarPainel();
-        formProduto.reset();
+        products.push(newProduct);
+        saveToStorage();
+        productForm.reset();
     });
 
-    // Excluir produto
-    function excluirProduto(id) {
-        produtos = produtos.filter(p => p.id !== id);
-        atualizarPainel();
-    }
-
-    // Formatar data para padrão brasileiro (DD/MM/AAAA)
-    function formatarData(dataString) {
-        const [ano, mes, dia] = dataString.split('-');
-        return `${dia}/${mes}/${ano}`;
-    }
-
-    // Renderizar a tabela na tela
-    function renderizarProdutos() {
-        listaProdutos.innerHTML = '';
-
-        if (produtos.length === 0) {
-            listaProdutos.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#718096;">Nenhum produto cadastrado.</td></tr>`;
-            return;
+    // Dar baixa (venda/consumo normal)
+    function darBaixa(id) {
+        const prod = products.find(p => p.id === id);
+        if (prod && prod.qty > 0) {
+            prod.qty -= 1;
+            saveToStorage();
+        } else {
+            alert("Estoque zerado!");
         }
+    }
 
-        // Ordenar do mais próximo de vencer para o mais distante
-        produtos.sort((a, b) => new Date(a.validade) - new Date(b.validade));
+    // Registrar perda (descarte/avaria)
+    function registrarPerda(id) {
+        const prod = products.find(p => p.id === id);
+        if (prod && prod.qty > 0) {
+            const qtdPerda = prompt(`Quantas unidades de "${prod.name}" deseja dar baixa por PERDA/AVARIA?`, "1");
+            const valorPerda = parseInt(qtdPerda);
+            
+            if (valorPerda > 0 && valorPerda <= prod.qty) {
+                prod.qty -= valorPerda;
+                alert(`${valorPerda} unidade(s) registrada(s) como perda.`);
+                saveToStorage();
+            } else if (valorPerda > prod.qty) {
+                alert("A quantidade de perda não pode ser maior que o estoque atual.");
+            }
+        } else {
+            alert("Não há estoque para registrar perda!");
+        }
+    }
 
-        produtos.forEach(p => {
-            const hoje = new Date();
-            hoje.setHours(0,0,0,0);
-            const dataValidade = new Date(p.validade);
-            dataValidade.setHours(24,0,0,0); // Ajuste de fuso horário local
+    // Excluir produto do sistema
+    function excluirProduto(id) {
+        if(confirm("Deseja realmente remover este produto do controle?")) {
+            products = products.filter(p => p.id !== id);
+            saveToStorage();
+        }
+    }
 
-            // Calcular diferença de dias
-            const diferencaTempo = dataValidade - hoje;
-            const diferencaDias = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
+    // Renderizar tabela na tela
+    function renderProducts() {
+        tableBody.innerHTML = '';
+        
+        // Ordena por data de validade mais próxima primeiro
+        products.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            let classeStatus = 'status-ok';
-            let textoStatus = `${diferencaDias} dias restantes`;
+        products.forEach(prod => {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const valDate = new Date(prod.date);
+            valDate.setHours(24,0,0,0); // Ajuste de fuso para o input date
 
-            if (diferencaDias < 0) {
-                classeStatus = 'status-vencido';
-                textoStatus = `VENCIDO (há ${Math.abs(diferencaDias)} dias)`;
-            } else if (diferencaDias === 0) {
-                classeStatus = 'status-alerta';
-                textoStatus = 'Vence HOJE!';
-            } else if (diferencaDias <= 7) {
-                classeStatus = 'status-alerta';
-                textoStatus = `Atenção: vence em ${diferencaDias} dias`;
+            // Diferença em dias
+            const diffTime = valDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            let statusClass = '';
+            let statusText = '';
+
+            if (diffDays < 0) {
+                statusClass = 'status-vencido';
+                statusText = 'VENCIDO';
+            } else if (diffDays <= 15) { // Alerta para produtos que vencem em até 15 dias
+                statusClass = 'status-alerta';
+                statusText = `Vence em ${diffDays} dias`;
+            } else {
+                statusClass = 'status-ok';
+                statusText = 'OK';
             }
 
+            // Formata data padrão brasileiro (DD/MM/AAAA)
+            const dateFormatted = valDate.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+
             const tr = document.createElement('tr');
-            tr.className = classeStatus;
             tr.innerHTML = `
-                <td><strong>${p.nome}</strong></td>
-                <td>${p.quantidade}</td>
-                <td>${formatarData(p.validade)}</td>
-                <td>${textoStatus}</td>
-                <td><button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button></td>
-            `;
-            listaProdutos.appendChild(tr);
-        });
-    }
-
-    // Inicializar na primeira execução
-    renderizarProdutos();
-</script>
-
-</body>
-</html>
+                <td><strong>${prod.name}</strong></td>
+                <td>${prod.qty} un</td>
