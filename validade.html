@@ -1,184 +1,143 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Validade e Estoque</title>
+    <title>Controle de Estoque e Validade</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 { text-align: center; color: #333; }
-        form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .form-group.full {
-            grid-column: span 2;
-        }
-        label { font-weight: bold; margin-bottom: 5px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button {
-            grid-column: span 2;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover { background-color: #218838; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
+        h1, h2 { color: #444; }
+        form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #218838; }
+        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #007bff; color: white; }
-        .vencido { background-color: #f8d7da; color: #721c24; }
-        .proximo { background-color: #fff3cd; color: #856404; }
-        .btn-excluir {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        .btn-excluir:hover { background-color: #c82333; }
+        tr:hover { background-color: #f1f1f1; }
+        .vencido { background-color: #f8d7da !important; color: #721c24; font-weight: bold; }
+        .btn-status { padding: 5px 10px; border: none; border-radius: 4px; color: white; cursor: pointer; }
+        .btn-perda { background-color: #dc3545; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Controle de Validade</h1>
-    
-    <form id="produtoForm">
-        <div class="form-group full">
+    <h1>📦 Controle de Estoque, Preço e Validade</h1>
+
+    <!-- Formulário de Cadastro -->
+    <form id="produto-form">
+        <h2>Cadastrar Produto</h2>
+        <div class="form-group">
             <label for="nome">Nome do Produto:</label>
             <input type="text" id="nome" required>
         </div>
         <div class="form-group">
             <label for="quantidade">Quantidade:</label>
-            <input type="number" id="quantidade" min="1" required>
+            <input type="number" id="quantidade" min="0" required>
+        </div>
+        <div class="form-group">
+            <label for="preco">Preço Unitário (R$):</label>
+            <input type="number" id="preco" step="0.01" min="0" required>
         </div>
         <div class="form-group">
             <label for="validade">Data de Validade:</label>
             <input type="date" id="validade" required>
         </div>
-        <button type="submit">Adicionar Produto</button>
+        <button type="submit">Adicionar ao Estoque</button>
     </form>
 
-    <h2>Lista de Produtos</h2>
+    <!-- Tabela de Produtos -->
+    <h2>Itens em Estoque</h2>
     <table>
         <thead>
             <tr>
                 <th>Produto</th>
                 <th>Qtd</th>
+                <th>Preço Unitário</th>
+                <th>Valor Total</th>
                 <th>Validade</th>
-                <th>Status</th>
-                <th>Ações</th>
+                <th>Status / Ações</th>
             </tr>
         </thead>
-        <tbody id="tabelaProdutos">
-            <!-- Dados inseridos via JavaScript -->
+        <tbody id="estoque-lista">
+            <!-- Inserido via JavaScript -->
         </tbody>
     </table>
-</div>
 
-<script>
-    const form = document.getElementById('produtoForm');
-    const tabela = document.getElementById('tabelaProdutos');
-    
-    let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+    <script>
+        // Inicializa o estoque pegando dados salvos ou um array vazio
+        let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
 
-    function salvarEAtualizar() {
-        localStorage.setItem('produtos', JSON.stringify(produtos));
-        renderizarProdutos();
-    }
+        const form = document.getElementById('produto-form');
+        const tabela = document.getElementById('estoque-lista');
 
-    function verificarStatus(dataValidade) {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        
-        const validade = new Date(dataValidade + 'T00:00:00');
-        const diffDias = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
-
-        if (diffDias < 0) {
-            return { texto: 'Vencido', classe: 'vencido' };
-        } else if (diffDias <= 7) {
-            return { texto: `Vence em ${diffDias} dias`, classe: 'proximo' };
-        } else {
-            return { texto: 'No prazo', classe: '' };
+        // Formata data do formato ISO (AAAA-MM-DD) para PT-BR (DD/MM/AAAA)
+        function formatarData(dataString) {
+            const [ano, mes, dia] = dataString.split('-');
+            return `${dia}/${mes}/${ano}`;
         }
-    }
 
-    function renderizarProdutos() {
-        tabela.innerHTML = '';
-        produtos.forEach((prod, index) => {
-            const status = verificarStatus(prod.validade);
-            
-            const tr = document.createElement('tr');
-            tr.className = status.classe;
-            
-            // Formatar data para DD/MM/AAAA
-            const dataFormatada = prod.validade.split('-').reverse().join('/');
+        // Renderiza a tabela na tela
+        function renderizarEstoque() {
+            tabela.innerHTML = '';
+            const hoje = new Date().toISOString().split('T')[0];
 
-            tr.innerHTML = `
-                <td>${prod.nome}</td>
-                <td>${prod.quantidade}</td>
-                <td>${dataFormatada}</td>
-                <td>${status.texto}</td>
-                <td><button class="btn-excluir" onclick="excluirProduto(${index})">Excluir</button></td>
-            `;
-            tabela.appendChild(tr);
+            estoque.forEach((produto, index) => {
+                const tr = document.createElement('tr');
+                
+                // Verifica se o produto está vencido
+                const estaVencido = produto.validade < hoje;
+                if (estaVencido) {
+                    tr.classList.add('vencido');
+                }
+
+                const valorTotal = (produto.quantidade * produto.preco).toFixed(2);
+                const statusTexto = estaVencido ? "⚠️ VENCIDO (Perda)" : "Em dia";
+
+                tr.innerHTML = `
+                    <td>${produto.nome}</td>
+                    <td>${produto.quantidade}</td>
+                    <td>R$ ${parseFloat(produto.preco).toFixed(2)}</td>
+                    <td>R$ ${valorTotal}</td>
+                    <td>${formatarData(produto.validade)}</td>
+                    <td>
+                        <span>${statusTexto}</span>
+                        <button class="btn-status btn-perda" onclick="removerProduto(${index})">Dar Baixa</button>
+                    </td>
+                `;
+                tabela.appendChild(tr);
+            });
+
+            // Salva o estado atualizado no navegador
+            localStorage.setItem('estoque', JSON.stringify(estoque));
+        }
+
+        // Evento de envio do formulário
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const novoProduto = {
+                nome: document.getElementById('nome').value,
+                quantidade: parseInt(document.getElementById('quantidade').value),
+                preco: parseFloat(document.getElementById('preco').value),
+                validade: document.getElementById('validade').value
+            };
+
+            estoque.push(novoProduto);
+            renderizarEstoque();
+            form.reset();
         });
-    }
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const novoProduto = {
-            nome: document.getElementById('nome').value,
-            quantidade: document.getElementById('quantidade').value,
-            validade: document.getElementById('validade').value
+        // Remove o produto (Simula a baixa por venda ou descarte por perda)
+        window.removerProduto = function(index) {
+            estoque.splice(index, 1);
+            renderizarEstoque();
         };
 
-        produtos.push(novoProduto);
-        salvarEAtualizar();
-        form.reset();
-    });
-
-    function excluirProduto(index) {
-        produtos.splice(index, 1);
-        salvarEAtualizar();
-    }
-
-    // Inicializar a tabela ao carregar a página
-    renderizarProdutos();
-</script>
-
+        // Renderiza ao carregar a página
+        renderizarEstoque();
+    </script>
 </body>
 </html>
