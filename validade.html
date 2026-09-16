@@ -4,311 +4,231 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Estoque e Validade</title>
+    <script src="https://unpkg.com"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f3f4f6; --text: #1f2937; --border: #e5e7eb; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1, h2 { color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-        
-        .form-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
-        input, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
-        button { background-color: var(--primary); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        button:hover { opacity: 0.9; }
-        .btn-danger { background-color: #dc2626; }
-        .btn-print { background-color: #16a34a; margin-bottom: 10px; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
-        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
-        th { background-color: #f8fafc; }
-        .vencido { color: #dc2626; font-weight: bold; }
-        .alerta { color: #d97706; font-weight: bold; }
-
-        /* Modal Styles */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 400px; max-width: 90%; }
-        
-        @media print {
-            body { background: white; padding: 0; }
-            .no-print { display: none !important; }
-            .container { box-shadow: none; max-width: 100%; }
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
+        h1, h2 { color: #444; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
+        #reader { width: 100%; max-width: 400px; background: #000; margin-bottom: 10px; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        button.btn-perda { background-color: #dc3545; }
+        button.btn-perda:hover { background-color: #bd2130; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .alerta-validade { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 class="no-print">Gestão de Estoque</h1>
+    <h1>Sistema de Estoque, Validade e Perdas</h1>
+    
+    <div class="container">
+        <!-- Scanner e Cadastro -->
+        <div class="box">
+            <h2>Escanear / Registrar Produto</h2>
+            <div id="reader"></div>
+            
+            <label for="barcode">Código de Barras</label>
+            <input type="text" id="barcode" placeholder="Bipe o código ou digite aqui" oninput="buscarProdutoAutomatico()">
 
-    <!-- Seção de Cadastro -->
-    <div class="no-print">
-        <h2>Cadastrar Produto</h2>
-        <form id="formProduto" onsubmit="adicionarProduto(event)">
-            <div class="form-group">
-                <div>
-                    <label>Nome do Produto</label>
-                    <input type="text" id="nome" required>
-                </div>
-                <div>
-                    <label>Quantidade</label>
-                    <input type="number" id="qtd" min="1" required>
-                </div>
-                <div>
-                    <label>Preço Unitário (R$)</label>
-                    <input type="number" id="preco" step="0.01" min="0" required>
-                </div>
-                <div>
-                    <label>Data de Validade</label>
-                    <input type="date" id="validade" required>
-                </div>
-            </div>
-            <button type="submit">Salvar no Estoque</button>
-        </form>
-    </div>
+            <label for="nome">Nome do Produto</label>
+            <input type="text" id="nome" placeholder="Ex: Leite Integral 1L">
 
-    <!-- Seção de Estoque -->
-    <div class="no-print">
-        <h2>Estoque Atual</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th>Qtd</th>
-                    <th>Preço (Un)</th>
-                    <th>Validade</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody id="tabelaEstoque"></tbody>
-        </table>
-    </div>
+            <label for="preco">Preço (R$)</label>
+            <input type="number" id="preco" step="0.01" placeholder="0.00">
 
-    <!-- Seção de Relatório -->
-    <div>
-        <h2>Relatório de Baixas e Movimentação</h2>
-        <button class="no-print btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-        <button class="no-print btn-danger" onclick="limparHistorico()">🗑️ Limpar Relatório</button>
-        <table>
-            <thead>
-                <tr>
-                    <th>Data/Hora</th>
-                    <th>Produto</th>
-                    <th>Qtd Baixada</th>
-                    <th>Motivo</th>
-                    <th>Destino/Observação</th>
-                </tr>
-            </thead>
-            <tbody id="tabelaRelatorio"></tbody>
-        </table>
-    </div>
-</div>
+            <label for="quantidade">Quantidade</label>
+            <input type="number" id="quantidade" value="1">
 
-<!-- Modal de Baixa -->
-<div id="modalBaixa" class="modal">
-    <div class="modal-content">
-        <h2>Registrar Baixa</h2>
-        <input type="hidden" id="baixaId">
-        <p>Produto: <strong id="baixaNome"></strong> (Estoque: <span id="baixaQtdAtual"></span>)</p>
-        
-        <div style="margin-bottom: 10px;">
-            <label>Quantidade para baixar</label>
-            <input type="number" id="baixaQtd" min="1" required>
+            <label for="validade">Data de Validade</label>
+            <input type="date" id="validade">
+
+            <button onclick="salvarProduto()">📥 Dar Entrada no Estoque</button>
+            <button class="btn-perda" onclick="registrarPerda()">⚠️ Registrar como Perda/Avaria</button>
         </div>
-        <div style="margin-bottom: 10px;">
-            <label>Motivo da Baixa</label>
-            <select id="baixaMotivo">
-                <option value="Venda">Venda</option>
-                <option value="Vencido">Produto Vencido</option>
-                <option value="Avaria/Perda">Avaria / Perda / Quebra</option>
-                <option value="Consumo Interno">Consumo Interno</option>
-            </select>
+
+        <!-- Banco de Dados Auxiliar (Simulação de Cadastro Prévio) -->
+        <div class="box">
+            <h2>Produtos Cadastrados no Sistema</h2>
+            <small>Quando você bipa o código, o sistema busca o Nome e Preço desta tabela:</small>
+            <table id="tabela-produtos-base">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nome</th>
+                        <th>Preço Base</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-produtos-base">
+                    <!-- Preenchido via JS -->
+                </tbody>
+            </table>
         </div>
-        <div style="margin-bottom: 15px;">
-            <label>Destino / Observação</label>
-            <input type="text" id="baixaDestino" placeholder="Ex: Cliente João, Lixo, Uso da equipe..." required>
-        </div>
-        
-        <button onclick="confirmarBaixa()">Confirmar Baixa</button>
-        <button class="btn-danger" onclick="fecharModal()">Cancelar</button>
     </div>
-</div>
 
-<script>
-    // Inicializa os dados a partir do LocalStorage ou arrays vazios
-    let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
-    let historico = JSON.parse(localStorage.getItem('historico')) || [];
+    <!-- Tabela de Movimentações -->
+    <h2>Estoque Atual & Validades</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Produto</th>
+                <th>Preço</th>
+                <th>Qtd</th>
+                <th>Validade</th>
+                <th>Status Validade</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-estoque"></tbody>
+    </table>
 
-    // Função para formatar data (YYYY-MM-DD para DD/MM/YYYY)
-    function formatarData(data) {
-        const [ano, mes, dia] = data.split('-');
-        return `${dia}/${mes}/${ano}`;
-    }
+    <h2>Relatório de Perdas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Produto</th>
+                <th>Qtd Perdida</th>
+                <th>Preço Unit.</th>
+                <th>Prejuízo Total</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-perdas"></tbody>
+    </table>
 
-    // Função para formatar dinheiro
-    function formatarMoeda(valor) {
-        return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    // Adiciona um novo produto ao estoque
-    function adicionarProduto(e) {
-        e.preventDefault();
-        
-        const produto = {
-            id: Date.now().toString(),
-            nome: document.getElementById('nome').value,
-            qtd: parseInt(document.getElementById('qtd').value),
-            preco: parseFloat(document.getElementById('preco').value),
-            validade: document.getElementById('validade').value
+    <script>
+        // Banco de dados simulado de produtos cadastrados na loja (Código -> Nome, Preço)
+        const produtosBase = {
+            "7891000100101": { nome: "Leite Longa Vida 1L", preco: 5.49 },
+            "7892000200202": { nome: "Arroz Agulhinha 5kg", preco: 24.90 },
+            "7893000300303": { nome: "Feijão Carioca 1kg", preco: 7.80 },
+            "7894000400404": { nome: "Café Torrado 500g", preco: 18.50 }
         };
 
-        estoque.push(produto);
-        salvarDados();
-        document.getElementById('formProduto').reset();
-        atualizarTelas();
-    }
+        // Arrays para controle de estoque e perdas na memória (recarregar a página limpa os dados temporários)
+        let estoque = [];
+        let perdas = [];
 
-    // Renderiza a tabela de estoque
-    function renderizarEstoque() {
-        const tbody = document.getElementById('tabelaEstoque');
-        tbody.innerHTML = '';
-        
-        const hoje = new Date();
-        hoje.setHours(0,0,0,0);
+        // Inicializa a tabela de produtos base na tela
+        function renderizarProdutosBase() {
+            const tbody = document.getElementById('corpo-produtos-base');
+            tbody.innerHTML = '';
+            for (let codigo in produtosBase) {
+                tbody.innerHTML += `<tr>
+                    <td><code>${codigo}</code></td>
+                    <td>${produtosBase[codigo].nome}</td>
+                    <td>R$ ${produtosBase[codigo].preco.toFixed(2)}</td>
+                </tr>`;
+            }
+        }
 
-        estoque.forEach(item => {
-            const dataValidade = new Date(item.validade + 'T00:00:00');
-            const diffTempo = dataValidade - hoje;
-            const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
-            
-            let classeValidade = '';
-            let textoValidade = formatarData(item.validade);
+        // Função automática disparada ao digitar ou escanear um código de barras
+        function buscarProdutoAutomatico() {
+            const codigo = document.getElementById('barcode').value.trim();
+            if (produtosBase[codigo]) {
+                document.getElementById('nome').value = produtosBase[codigo].nome;
+                document.getElementById('preco').value = produtosBase[codigo].preco;
+            } else {
+                // Se for um produto novo, limpa os campos para digitação manual
+                document.getElementById('nome').value = '';
+                document.getElementById('preco').value = '';
+            }
+        }
 
-            if (diffDias < 0) {
-                classeValidade = 'vencido';
-                textoValidade += ' (VENCIDO)';
-            } else if (diffDias <= 7) {
-                classeValidade = 'alerta';
-                textoValidade += ` (Vence em ${diffDias} dias)`;
+        // Salva a entrada do produto no estoque
+        function salvarProduto() {
+            const codigo = document.getElementById('barcode').value.trim();
+            const nome = document.getElementById('nome').value.trim();
+            const preco = parseFloat(document.getElementById('preco').value);
+            const quantidade = parseInt(document.getElementById('quantidade').value);
+            const validade = document.getElementById('validade').value;
+
+            if (!codigo || !nome || isNaN(preco) || isNaN(quantidade) || !validade) {
+                alert("Por favor, preencha todos os campos corretamente.");
+                return;
             }
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.nome}</td>
-                <td>${item.qtd}</td>
-                <td>${formatarMoeda(item.preco)}</td>
-                <td class="${classeValidade}">${textoValidade}</td>
-                <td>
-                    <button onclick="abrirModal('${item.id}')">Baixar / Registrar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
+            // Se o produto não existia na base de dados, adiciona ele para futuras automações
+            if (!produtosBase[codigo]) {
+                produtosBase[codigo] = { nome: nome, preco: preco };
+                renderizarProdutosBase();
+            }
 
-    // Funções do Modal de Baixa
-    function abrirModal(id) {
-        const item = estoque.find(i => i.id === id);
-        if(!item) return;
-
-        document.getElementById('baixaId').value = item.id;
-        document.getElementById('baixaNome').innerText = item.nome;
-        document.getElementById('baixaQtdAtual').innerText = item.qtd;
-        document.getElementById('baixaQtd').max = item.qtd;
-        document.getElementById('baixaQtd').value = 1;
-        document.getElementById('baixaDestino').value = '';
-        
-        document.getElementById('modalBaixa').style.display = 'flex';
-    }
-
-    function fecharModal() {
-        document.getElementById('modalBaixa').style.display = 'none';
-    }
-
-    function confirmarBaixa() {
-        const id = document.getElementById('baixaId').value;
-        const qtdBaixa = parseInt(document.getElementById('baixaQtd').value);
-        const motivo = document.getElementById('baixaMotivo').value;
-        const destino = document.getElementById('baixaDestino').value;
-
-        if(!qtdBaixa || qtdBaixa <= 0 || !destino) {
-            alert("Preencha a quantidade e o destino corretamente!");
-            return;
+            estoque.push({ codigo, nome, preco, quantidade, validade });
+            atualizarTabelas();
+            limparFormulario();
         }
 
-        const index = estoque.findIndex(i => i.id === id);
-        if (index === -1) return;
+        // Registra o produto diretamente no relatório de perdas
+        function registrarPerda() {
+            const codigo = document.getElementById('barcode').value.trim();
+            const nome = document.getElementById('nome').value.trim();
+            const preco = parseFloat(document.getElementById('preco').value);
+            const quantidade = parseInt(document.getElementById('quantidade').value);
 
-        if (qtdBaixa > estoque[index].qtd) {
-            alert("Quantidade de baixa maior que o estoque atual!");
-            return;
+            if (!codigo || !nome || isNaN(preco) || isNaN(quantidade)) {
+                alert("Preencha Código, Nome, Preço e Quantidade para registrar a perda.");
+                return;
+            }
+
+            perdas.push({ codigo, nome, quantidade, preco });
+            atualizarTabelas();
+            limparFormulario();
         }
 
-        // Subtrai do estoque
-        estoque[index].qtd -= qtdBaixa;
+        // Atualiza a visualização das tabelas na tela
+        function atualizarTabelas() {
+            const tabelaEstoque = document.getElementById('tabela-estoque');
+            tabelaEstoque.innerHTML = '';
+            const hoje = new Date();
 
-        // Registra no histórico
-        const registro = {
-            dataHora: new Date().toLocaleString('pt-BR'),
-            nomeProduto: estoque[index].nome,
-            qtdBaixada: qtdBaixa,
-            motivo: motivo,
-            destino: destino
-        };
-        historico.push(registro);
+            estoque.forEach(item => {
+                const dataValidade = new Date(item.validade + 'T00:00:00');
+                let statusValidade = "Ok";
+                let classeStatus = "";
 
-        // Se a quantidade zerar, remove do estoque
-        if (estoque[index].qtd === 0) {
-            estoque.splice(index, 1);
+                // Verifica se está vencido ou próximo de vencer (menos de 7 dias)
+                const diferencaTempo = dataValidade - hoje;
+                const diferencaDias = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
+
+                if (diferencaDias < 0) {
+                    statusValidade = "⚠️ VENCIDO";
+                    classeStatus = "alerta-validade";
+                } else if (diferencaDias <= 7) {
+                    statusValidade = `⚠️ Vence em ${diferencaDias} dias`;
+                    classeStatus = "alerta-validade";
+                }
+
+                tabelaEstoque.innerHTML += `<tr>
+                    <td>${item.codigo}</td>
+                    <td>${item.nome}</td>
+                    <td>R$ ${item.preco.toFixed(2)}</td>
+                    <td>${item.quantidade}</td>
+                    <td>${item.validade.split('-').reverse().join('/')}</td>
+                    <td class="${classeStatus}">${statusValidade}</td>
+                </tr>`;
+            });
+
+            const tabelaPerdas = document.getElementById('tabela-perdas');
+            tabelaPerdas.innerHTML = '';
+            perdas.forEach(item => {
+                const prejuizo = item.quantidade * item.preco;
+                tabelaPerdas.innerHTML += `<tr>
+                    <td>${item.codigo}</td>
+                    <td>${item.nome}</td>
+                    <td>${item.quantidade}</td>
+                    <td>R$ ${item.preco.toFixed(2)}</td>
+                    <td class="alerta-validade">R$ ${prejuizo.toFixed(2)}</td>
+                </tr>`;
+            });
         }
 
-        salvarDados();
-        fecharModal();
-        atualizarTelas();
-    }
-
-    // Renderiza a tabela de relatório/histórico
-    function renderizarRelatorio() {
-        const tbody = document.getElementById('tabelaRelatorio');
-        tbody.innerHTML = '';
-
-        // Mostra os mais recentes primeiro
-        const historicoInvertido = [...historico].reverse();
-
-        historicoInvertido.forEach(reg => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${reg.dataHora}</td>
-                <td>${reg.nomeProduto}</td>
-                <td>${reg.qtdBaixada}</td>
-                <td>${reg.motivo}</td>
-                <td>${reg.destino}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function limparHistorico() {
-        if(confirm("Tem certeza que deseja apagar todo o relatório de baixas?")) {
-            historico = [];
-            salvarDados();
-            atualizarTelas();
-        }
-    }
-
-    // Salva no LocalStorage
-    function salvarDados() {
-        localStorage.setItem('estoque', JSON.stringify(estoque));
-        localStorage.setItem('historico', JSON.stringify(historico));
-    }
-
-    // Atualiza as tabelas na tela
-    function atualizarTelas() {
-        renderizarEstoque();
-        renderizarRelatorio();
-    }
-
-    // Inicia a aplicação carregando os dados
-    atualizarTelas();
-</script>
-</body>
-</html>
+        function limparFormulario() {
+            document.getElementById('barcode').value = '';
+            document.getElementById('nome').value = '';
