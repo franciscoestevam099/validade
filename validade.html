@@ -282,3 +282,13 @@
                     nome: produto.nome,
                     quantidade: qtdBaixa,
                     preco: produto.preco,
+
+                    ### Funcionalidades incluídas:
+* **Validade com Alertas:** O sistema muda de cor automaticamente: **Verde** para produtos ok, **Laranja** se o vencimento for nos próximos 30 dias, e **Vermelho** se já estiver vencido.
+* **Para onde ele vai quando dá baixa?:** Ao dar baixa em uma quantidade, você escolhe o destino (Venda, Vencimento, Avaria ou Doação). 
+* **Relatório Automático de Perdas:** Na aba *"Histórico de Baixas / Perdas"*, o sistema gera uma tabela cronológica registrando para onde os itens foram e calcula automaticamente o **Prejuízo Real** (somando apenas o que foi perdido por vencimento/avaria).
+* **Persistência de dados:** Utiliza o `localStorage` do navegador para que os dados fiquem salvos mesmo se você fechar a janela ou atualizar a página.
+
+<FollowUp>
+Deseja adicionar alguma funcionalidade extra a esse script, como um botão para **exportar o relatório para Excel / PDF** ou um campo para **número de lote** do produto?
+</FollowUp>
