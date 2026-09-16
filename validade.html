@@ -3,232 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Estoque e Validade</title>
+    <title>Controle de Validade e Estoque</title>
     <style>
         :root {
             --primary: #2563eb;
             --success: #16a34a;
             --danger: #dc2626;
-            --warning: #ca8a04;
-            --background: #f8fafc;
-            --surface: #ffffff;
-            --text: #1e293b;
+            --gray-light: #f3f4f6;
+            --text: #1f2937;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         body {
-            background-color: var(--background);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f8fafc;
             color: var(--text);
-            padding: 20px;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-
-        /* Dashboard de Resumo */
-        .dashboard {
+        h1, h2 { color: #1e3a8a; }
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .card {
-            background: var(--surface);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-left: 5px solid var(--primary);
-        }
-
-        .card.vencidos { border-left-color: var(--danger); }
-        .card.perda { border-left-color: var(--warning); }
-
-        .card h3 {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            color: #64748b;
-            margin-bottom: 5px;
-        }
-
-        .card p {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        /* Formulário e Tabela */
-        .content-layout {
-            display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
-
-        @media (max-width: 768px) {
-            .content-layout { grid-template-columns: 1fr; }
-        }
-
-        form {
-            background: var(--surface);
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card {
+            background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            height: fit-content;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
-
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
-
-        .form-group label {
+        label {
             display: block;
             margin-bottom: 5px;
             font-weight: 600;
-            font-size: 0.9rem;
         }
-
-        .form-group input {
+        input, select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 8px;
             border: 1px solid #cbd5e1;
             border-radius: 4px;
-            font-size: 1rem;
+            box-sizing: border-box;
         }
-
         button {
-            width: 100%;
-            padding: 10px;
-            background: var(--primary);
+            background-color: var(--primary);
             color: white;
             border: none;
+            padding: 10px 15px;
             border-radius: 4px;
-            font-size: 1rem;
-            font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            font-weight: bold;
+            width: 100%;
         }
-
-        button:hover { background: #1d4ed8; }
-
-        .table-container {
-            background: var(--surface);
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-
+        button:hover { opacity: 0.9; }
+        button.btn-danger { background-color: var(--danger); }
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
             text-align: left;
         }
-
-        th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-            background-color: #f1f5f9;
-            color: #475569;
-            font-weight: 600;
-        }
-
-        /* Status de Validade */
-        .status {
+        th { background-color: var(--gray-light); }
+        .badge {
             padding: 4px 8px;
             border-radius: 4px;
-            font-size: 0.85rem;
+            font-size: 12px;
             font-weight: bold;
-            display: inline-block;
+            color: white;
         }
-
-        .status.ok { background: #dcfce7; color: #15803d; }
-        .status.alerta { background: #fef9c3; color: #a16207; }
-        .status.vencido { background: #fee2e2; color: #b91c1c; }
-
-        .btn-delete {
-            background: none;
-            color: var(--danger);
-            border: none;
-            cursor: pointer;
-            font-size: 0.9rem;
-            text-decoration: underline;
+        .bg-ok { background-color: var(--success); }
+        .bg-alert { background-color: #f59e0b; }
+        .bg-expired { background-color: var(--danger); }
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            background: #e2e8f0;
+            color: var(--text);
+            padding: 8px 16px;
             width: auto;
-            padding: 0;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .summary-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .summary-card {
+            flex: 1;
+            padding: 15px;
+            background: var(--gray-light);
+            border-radius: 6px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>Controle de Estoque e Validade</h1>
-        <p>Monitore quantidades, preços, validades e prejuízos por perda.</p>
-    </header>
+    <h1>📦 Sistema de Estoque e Validades</h1>
 
-    <!-- Indicadores -->
-    <div class="dashboard">
+    <div class="grid">
+        <!-- FORMULÁRIO DE CADASTRO -->
         <div class="card">
-            <h3>Total de Itens</h3>
-            <p id="dash-total-itens">0</p>
+            <h2>Cadastrar Produto</h2>
+            <form id="produtoForm">
+                <div class="form-group">
+                    <label>Nome do Produto:</label>
+                    <input type="text" id="nome" required>
+                </div>
+                <div class="form-group">
+                    <label>Quantidade:</label>
+                    <input type="number" id="quantidade" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Preço Unitário (R$):</label>
+                    <input type="number" id="preco" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Data de Validade:</label>
+                    <input type="date" id="validade" required>
+                </div>
+                <button type="submit">Adicionar ao Estoque</button>
+            </form>
         </div>
+
+        <!-- FORMULÁRIO DE BAIXA / PERDA -->
         <div class="card">
-            <h3>Valor em Estoque</h3>
-            <p id="dash-valor-estoque">R$ 0,00</p>
-        </div>
-        <div class="card vencidos">
-            <h3>Produtos Vencidos</h3>
-            <p id="dash-vencidos">0</p>
-        </div>
-        <div class="card perda">
-            <h3>Perda Financeira</h3>
-            <p id="dash-perda-total">R$ 0,00</p>
+            <h2>Dar Baixa (Perda / Saída)</h2>
+            <form id="baixaForm">
+                <div class="form-group">
+                    <label>Selecionar Produto do Estoque:</label>
+                    <select id="baixaProduto" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantidade para Dar Baixa:</label>
+                    <input type="number" id="baixaQuantidade" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Motivo da Baixa:</label>
+                    <select id="baixaMotivo" required>
+                        <option value="Vencimento">Vencimento (Perda)</option>
+                        <option value="Avaria">Avaria / Estragado (Perda)</option>
+                        <option value="Venda">Venda / Saída Padrão</option>
+                        <option value="Doação">Doação</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-danger">Confirmar Baixa</button>
+            </form>
         </div>
     </div>
 
-    <!-- Layout Principal -->
-    <div class="content-layout">
-        <!-- Formulário -->
-        <form id="produto-form">
-            <div class="form-group">
-                <label for="nome">Nome do Produto</label>
-                <input type="text" id="nome" required placeholder="Ex: Leite Integral">
-            </div>
-            <div class="form-group">
-                <label for="quantidade">Quantidade</label>
-                <input type="number" id="quantidade" min="1" required placeholder="0">
-            </div>
-            <div class="form-group">
-                <label for="preco">Preço Unitário (R$)</label>
-                <input type="number" id="preco" step="0.01" min="0" required placeholder="0,00">
-            </div>
-            <div class="form-group">
-                <label for="validade">Data de Validade</label>
-                <input type="date" id="validade" required>
-            </div>
-            <button type="submit">Adicionar ao Estoque</button>
-        </form>
+    <!-- SEÇÃO DE RELATÓRIOS E LISTAS -->
+    <div class="card">
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('estoque')">Estoque Atual</button>
+            <button class="tab-btn" onclick="switchTab('perdas')">Histórico de Baixas / Perdas</button>
+        </div>
 
-        <!-- Tabela -->
-        <div class="table-container">
-            <table>
+        <!-- ABA ESTOQUE -->
+        <div id="tabEstoque">
+            <h2>Produtos em Estoque</h2>
+            <div class="summary-box">
+                <div class="summary-card">
+                    <strong>Total Itens:</strong> <span id="totalEstoqueItens">0</span>
+                </div>
+                <div class="summary-card">
+                    <strong>Valor em Estoque:</strong> R$ <span id="totalEstoqueValor">0.00</span>
+                </div>
+            </div>
+            <table id="tabelaEstoque">
                 <thead>
                     <tr>
                         <th>Produto</th>
@@ -237,232 +193,60 @@
                         <th>Total</th>
                         <th>Validade</th>
                         <th>Status</th>
-                        <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody id="estoque-lista">
-                    <!-- Inserido dinamicamente via JS -->
-                </tbody>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- ABA PERDAS / BAIXAS -->
+        <div id="tabPerdas" style="display: none;">
+            <h2>Histórico de Movimentações (Para onde foi?)</h2>
+            <div class="summary-box">
+                <div class="summary-card">
+                    <strong>Prejuízo por Perdas:</strong> R$ <span id="totalPrejuizo">0.00</span>
+                </div>
+            </div>
+            <table id="tabelaPerdas">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Produto</th>
+                        <th>Qtd Retirada</th>
+                        <th>Valor Unit.</th>
+                        <th>Total Retirado</th>
+                        <th>Destino / Motivo</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
             </table>
         </div>
     </div>
-</div>
-
-<script>
-    // Estado da aplicação (salva automaticamente no navegador)
-    let estoque = JSON.parse(localStorage.getItem('estoque_produtos')) || [];
-
-    const form = document.getElementById('produto-form');
-    const listaEstoque = document.getElementById('estoque-lista');
-
-    // Elementos do Dashboard
-    const dashTotalItens = document.getElementById('dash-total-itens');
-    const dashValorEstoque = document.getElementById('dash-valor-estoque');
-    const dashVencidos = document.getElementById('dash-vencidos');
-    const dashPerdaTotal = document.getElementById('dash-perda-total');
-
-    // Manipula o envio do formulário
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const novoProduto = {
-            id: Date.now(),
-            nome: document.getElementById('nome').value,
-            quantidade: parseInt(document.getElementById('quantidade').value),
-            preco: parseFloat(document.getElementById('preco').value),
-            validade: document.getElementById('validade').value
-        };
-
-        estoque.push(novoProduto);
-        atualizarSistema();
-        form.reset();
-    });
-
-    // Exclui um produto
-    function excluirProduto(id) {
-        estoque = estoque.filter(p => p.id !== id);
-        atualizarSistema();
-    }
-
-    // Calcula a situação da validade e retorna a formatação
-    function verificarValidade(dataValidade, quantidade, preco) {
-        const hoje = new Date();
-        hoje.setHours(0,0,0,0);
-        
-        const dataProd = new Date(dataValidade);
-        dataProd.setHours(0,0,0,0);
-
-        // Diferença em dias
-        const diferencaTempo = dataProd - hoje;
-        const diferencaDias = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
-
-        if (diferencaDias < 0) {
-            return { 
-                texto: 'Vencido', 
-                classe: 'vencido', 
-                vencido: true, 
-                perda: quantidade * preco 
-            };
-        } else if (diferencaDias <= 7) { // Alerta se vencer em até 7 dias
-            return { 
-                texto: `Vence em ${diferencaDias} dia(s)`, 
-                classe: 'alerta', 
-                vencido: false, 
-                perda: 0 
-            };
-        } else {
-            return { 
-                texto: 'Em dia', 
-                classe: 'ok', 
-                vencido: false, 
-                perda: 0 
-            };
-        }
-    }
-
-    // Formata valores para Moeda Real (BRL)
-    function formatarMoeda(valor) {
-        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    // Formata a exibição da data (Ano-Mês-Dia para Dia/Mês/Ano)
-    function formatarData(dataString) {
-        const partes = dataString.split('-');
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-
-    // Atualiza a tela, recalcula totais e salva os dados
-    function atualizarSistema() {
-        // Salva no LocalStorage
-        localStorage.setItem('estoque_produtos', JSON.stringify(estoque));
-
-        // Limpa a tabela
-        listaEstoque.innerHTML = '';
-
-        // Variáveis de soma para o Dashboard
-        let totalItens = 0;
-        let valorEstoqueAtivo = 0;
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Estoque e Validade</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
-        h1, h2 { color: #444; }
-        form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #218838; }
-        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #007bff; color: white; }
-        tr:hover { background-color: #f1f1f1; }
-        .vencido { background-color: #f8d7da !important; color: #721c24; font-weight: bold; }
-        .btn-status { padding: 5px 10px; border: none; border-radius: 4px; color: white; cursor: pointer; }
-        .btn-perda { background-color: #dc3545; }
-    </style>
-</head>
-<body>
-
-    <h1>📦 Controle de Estoque, Preço e Validade</h1>
-
-    <!-- Formulário de Cadastro -->
-    <form id="produto-form">
-        <h2>Cadastrar Produto</h2>
-        <div class="form-group">
-            <label for="nome">Nome do Produto:</label>
-            <input type="text" id="nome" required>
-        </div>
-        <div class="form-group">
-            <label for="quantidade">Quantidade:</label>
-            <input type="number" id="quantidade" min="0" required>
-        </div>
-        <div class="form-group">
-            <label for="preco">Preço Unitário (R$):</label>
-            <input type="number" id="preco" step="0.01" min="0" required>
-        </div>
-        <div class="form-group">
-            <label for="validade">Data de Validade:</label>
-            <input type="date" id="validade" required>
-        </div>
-        <button type="submit">Adicionar ao Estoque</button>
-    </form>
-
-    <!-- Tabela de Produtos -->
-    <h2>Itens em Estoque</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th>Qtd</th>
-                <th>Preço Unitário</th>
-                <th>Valor Total</th>
-                <th>Validade</th>
-                <th>Status / Ações</th>
-            </tr>
-        </thead>
-        <tbody id="estoque-lista">
-            <!-- Inserido via JavaScript -->
-        </tbody>
-    </table>
 
     <script>
-        // Inicializa o estoque pegando dados salvos ou um array vazio
+        // Inicialização dos dados pegando do localStorage (se existirem)
         let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
+        let historicoBaixas = JSON.parse(localStorage.getItem('historicoBaixas')) || [];
 
-        const form = document.getElementById('produto-form');
-        const tabela = document.getElementById('estoque-lista');
+        // Elementos do DOM
+        const produtoForm = document.getElementById('produtoForm');
+        const baixaForm = document.getElementById('baixaForm');
+        const baixaProdutoSelect = document.getElementById('baixaProduto');
 
-        // Formata data do formato ISO (AAAA-MM-DD) para PT-BR (DD/MM/AAAA)
-        function formatarData(dataString) {
-            const [ano, mes, dia] = dataString.split('-');
-            return `${dia}/${mes}/${ano}`;
-        }
-
-        // Renderiza a tabela na tela
-        function renderizarEstoque() {
-            tabela.innerHTML = '';
-            const hoje = new Date().toISOString().split('T')[0];
-
-            estoque.forEach((produto, index) => {
-                const tr = document.createElement('tr');
-                
-                // Verifica se o produto está vencido
-                const estaVencido = produto.validade < hoje;
-                if (estaVencido) {
-                    tr.classList.add('vencido');
-                }
-
-                const valorTotal = (produto.quantidade * produto.preco).toFixed(2);
-                const statusTexto = estaVencido ? "⚠️ VENCIDO (Perda)" : "Em dia";
-
-                tr.innerHTML = `
-                    <td>${produto.nome}</td>
-                    <td>${produto.quantidade}</td>
-                    <td>R$ ${parseFloat(produto.preco).toFixed(2)}</td>
-                    <td>R$ ${valorTotal}</td>
-                    <td>${formatarData(produto.validade)}</td>
-                    <td>
-                        <span>${statusTexto}</span>
-                        <button class="btn-status btn-perda" onclick="removerProduto(${index})">Dar Baixa</button>
-                    </td>
-                `;
-                tabela.appendChild(tr);
-            });
-
-            // Salva o estado atualizado no navegador
+        // Salvar dados no navegador
+        function salvarDados() {
             localStorage.setItem('estoque', JSON.stringify(estoque));
+            localStorage.setItem('historicoBaixas', JSON.stringify(historicoBaixas));
+            atualizarTabelas();
+            atualizarSelectBaixa();
         }
 
-        // Evento de envio do formulário
-        form.addEventListener('submit', (e) => {
+        // Adicionar novo produto
+        produtoForm.addEventListener('submit', (e) => {
             e.preventDefault();
-
+            
             const novoProduto = {
+                id: Date.now().toString(),
                 nome: document.getElementById('nome').value,
                 quantidade: parseInt(document.getElementById('quantidade').value),
                 preco: parseFloat(document.getElementById('preco').value),
@@ -470,18 +254,31 @@
             };
 
             estoque.push(novoProduto);
-            renderizarEstoque();
-            form.reset();
+            salvarDados();
+            produtoForm.reset();
         });
 
-        // Remove o produto (Simula a baixa por venda ou descarte por perda)
-        window.removerProduto = function(index) {
-            estoque.splice(index, 1);
-            renderizarEstoque();
-        };
+        // Dar baixa em um produto
+        baixaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-        // Renderiza ao carregar a página
-        renderizarEstoque();
-    </script>
-</body>
-</html>
+            const produtoId = baixaProdutoSelect.value;
+            const qtdBaixa = parseInt(document.getElementById('baixaQuantidade').value);
+            const motivo = document.getElementById('baixaMotivo').value;
+
+            const produtoIndex = estoque.findIndex(p => p.id === produtoId);
+            
+            if (produtoIndex !== -1) {
+                const produto = estoque[produtoIndex];
+
+                if (qtdBaixa > produto.quantidade) {
+                    alert('Quantidade de baixa maior do que o estoque disponível!');
+                    return;
+                }
+
+                // Registra no histórico para onde o produto foi
+                const registroBaixa = {
+                    data: new Date().toLocaleString('pt-BR'),
+                    nome: produto.nome,
+                    quantidade: qtdBaixa,
+                    preco: produto.preco,
