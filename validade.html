@@ -1,234 +1,31 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Estoque e Validade</title>
-    <script src="https://unpkg.com"></script>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
-        h1, h2 { color: #444; }
-        .container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
-        #reader { width: 100%; max-width: 400px; background: #000; margin-bottom: 10px; }
-        label { display: block; margin: 10px 0 5px; font-weight: bold; }
-        input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #218838; }
-        button.btn-perda { background-color: #dc3545; }
-        button.btn-perda:hover { background-color: #bd2130; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #007bff; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        .alerta-validade { color: #dc3545; font-weight: bold; }
-    </style>
-</head>
-<body>
+// Exemplo de produto
+const produto = {
+  nome: "Leite Integral",
+  quantidade: 5,
+  validade: "2026-10-15" // Formato: AAAA-MM-DD
+};
 
-    <h1>Sistema de Estoque, Validade e Perdas</h1>
-    
-    <div class="container">
-        <!-- Scanner e Cadastro -->
-        <div class="box">
-            <h2>Escanear / Registrar Produto</h2>
-            <div id="reader"></div>
-            
-            <label for="barcode">Código de Barras</label>
-            <input type="text" id="barcode" placeholder="Bipe o código ou digite aqui" oninput="buscarProdutoAutomatico()">
+function validarProduto(item) {
+  const dataAtual = new Date();
+  const dataValidade = new Date(item.validade);
+  
+  // Zera as horas para comparar apenas os dias
+  dataAtual.setHours(0, 0, 0, 0);
+  dataValidade.setHours(0, 0, 0, 0);
 
-            <label for="nome">Nome do Produto</label>
-            <input type="text" id="nome" placeholder="Ex: Leite Integral 1L">
+  // 1. Validação de Quantidade
+  if (item.quantidade <= 0) {
+    return { valido: false, motivo: "Produto fora de estoque." };
+  }
 
-            <label for="preco">Preço (R$)</label>
-            <input type="number" id="preco" step="0.01" placeholder="0.00">
+  // 2. Validação de Validade
+  if (dataValidade < dataAtual) {
+    return { valido: false, motivo: "Produto vencido." };
+  }
 
-            <label for="quantidade">Quantidade</label>
-            <input type="number" id="quantidade" value="1">
+  return { valido: true, motivo: "Produto pronto para venda!" };
+}
 
-            <label for="validade">Data de Validade</label>
-            <input type="date" id="validade">
-
-            <button onclick="salvarProduto()">📥 Dar Entrada no Estoque</button>
-            <button class="btn-perda" onclick="registrarPerda()">⚠️ Registrar como Perda/Avaria</button>
-        </div>
-
-        <!-- Banco de Dados Auxiliar (Simulação de Cadastro Prévio) -->
-        <div class="box">
-            <h2>Produtos Cadastrados no Sistema</h2>
-            <small>Quando você bipa o código, o sistema busca o Nome e Preço desta tabela:</small>
-            <table id="tabela-produtos-base">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nome</th>
-                        <th>Preço Base</th>
-                    </tr>
-                </thead>
-                <tbody id="corpo-produtos-base">
-                    <!-- Preenchido via JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Tabela de Movimentações -->
-    <h2>Estoque Atual & Validades</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Código</th>
-                <th>Produto</th>
-                <th>Preço</th>
-                <th>Qtd</th>
-                <th>Validade</th>
-                <th>Status Validade</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-estoque"></tbody>
-    </table>
-
-    <h2>Relatório de Perdas</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Código</th>
-                <th>Produto</th>
-                <th>Qtd Perdida</th>
-                <th>Preço Unit.</th>
-                <th>Prejuízo Total</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-perdas"></tbody>
-    </table>
-
-    <script>
-        // Banco de dados simulado de produtos cadastrados na loja (Código -> Nome, Preço)
-        const produtosBase = {
-            "7891000100101": { nome: "Leite Longa Vida 1L", preco: 5.49 },
-            "7892000200202": { nome: "Arroz Agulhinha 5kg", preco: 24.90 },
-            "7893000300303": { nome: "Feijão Carioca 1kg", preco: 7.80 },
-            "7894000400404": { nome: "Café Torrado 500g", preco: 18.50 }
-        };
-
-        // Arrays para controle de estoque e perdas na memória (recarregar a página limpa os dados temporários)
-        let estoque = [];
-        let perdas = [];
-
-        // Inicializa a tabela de produtos base na tela
-        function renderizarProdutosBase() {
-            const tbody = document.getElementById('corpo-produtos-base');
-            tbody.innerHTML = '';
-            for (let codigo in produtosBase) {
-                tbody.innerHTML += `<tr>
-                    <td><code>${codigo}</code></td>
-                    <td>${produtosBase[codigo].nome}</td>
-                    <td>R$ ${produtosBase[codigo].preco.toFixed(2)}</td>
-                </tr>`;
-            }
-        }
-
-        // Função automática disparada ao digitar ou escanear um código de barras
-        function buscarProdutoAutomatico() {
-            const codigo = document.getElementById('barcode').value.trim();
-            if (produtosBase[codigo]) {
-                document.getElementById('nome').value = produtosBase[codigo].nome;
-                document.getElementById('preco').value = produtosBase[codigo].preco;
-            } else {
-                // Se for um produto novo, limpa os campos para digitação manual
-                document.getElementById('nome').value = '';
-                document.getElementById('preco').value = '';
-            }
-        }
-
-        // Salva a entrada do produto no estoque
-        function salvarProduto() {
-            const codigo = document.getElementById('barcode').value.trim();
-            const nome = document.getElementById('nome').value.trim();
-            const preco = parseFloat(document.getElementById('preco').value);
-            const quantidade = parseInt(document.getElementById('quantidade').value);
-            const validade = document.getElementById('validade').value;
-
-            if (!codigo || !nome || isNaN(preco) || isNaN(quantidade) || !validade) {
-                alert("Por favor, preencha todos os campos corretamente.");
-                return;
-            }
-
-            // Se o produto não existia na base de dados, adiciona ele para futuras automações
-            if (!produtosBase[codigo]) {
-                produtosBase[codigo] = { nome: nome, preco: preco };
-                renderizarProdutosBase();
-            }
-
-            estoque.push({ codigo, nome, preco, quantidade, validade });
-            atualizarTabelas();
-            limparFormulario();
-        }
-
-        // Registra o produto diretamente no relatório de perdas
-        function registrarPerda() {
-            const codigo = document.getElementById('barcode').value.trim();
-            const nome = document.getElementById('nome').value.trim();
-            const preco = parseFloat(document.getElementById('preco').value);
-            const quantidade = parseInt(document.getElementById('quantidade').value);
-
-            if (!codigo || !nome || isNaN(preco) || isNaN(quantidade)) {
-                alert("Preencha Código, Nome, Preço e Quantidade para registrar a perda.");
-                return;
-            }
-
-            perdas.push({ codigo, nome, quantidade, preco });
-            atualizarTabelas();
-            limparFormulario();
-        }
-
-        // Atualiza a visualização das tabelas na tela
-        function atualizarTabelas() {
-            const tabelaEstoque = document.getElementById('tabela-estoque');
-            tabelaEstoque.innerHTML = '';
-            const hoje = new Date();
-
-            estoque.forEach(item => {
-                const dataValidade = new Date(item.validade + 'T00:00:00');
-                let statusValidade = "Ok";
-                let classeStatus = "";
-
-                // Verifica se está vencido ou próximo de vencer (menos de 7 dias)
-                const diferencaTempo = dataValidade - hoje;
-                const diferencaDias = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
-
-                if (diferencaDias < 0) {
-                    statusValidade = "⚠️ VENCIDO";
-                    classeStatus = "alerta-validade";
-                } else if (diferencaDias <= 7) {
-                    statusValidade = `⚠️ Vence em ${diferencaDias} dias`;
-                    classeStatus = "alerta-validade";
-                }
-
-                tabelaEstoque.innerHTML += `<tr>
-                    <td>${item.codigo}</td>
-                    <td>${item.nome}</td>
-                    <td>R$ ${item.preco.toFixed(2)}</td>
-                    <td>${item.quantidade}</td>
-                    <td>${item.validade.split('-').reverse().join('/')}</td>
-                    <td class="${classeStatus}">${statusValidade}</td>
-                </tr>`;
-            });
-
-            const tabelaPerdas = document.getElementById('tabela-perdas');
-            tabelaPerdas.innerHTML = '';
-            perdas.forEach(item => {
-                const prejuizo = item.quantidade * item.preco;
-                tabelaPerdas.innerHTML += `<tr>
-                    <td>${item.codigo}</td>
-                    <td>${item.nome}</td>
-                    <td>${item.quantidade}</td>
-                    <td>R$ ${item.preco.toFixed(2)}</td>
-                    <td class="alerta-validade">R$ ${prejuizo.toFixed(2)}</td>
-                </tr>`;
-            });
-        }
-
-        function limparFormulario() {
-            document.getElementById('barcode').value = '';
-            document.getElementById('nome').value = '';
+// Executando o teste
+const resultado = validarProduto(produto);
+console.log(resultado.motivo); 
