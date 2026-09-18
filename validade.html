@@ -1,212 +1,116 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestão de Estoque Inteligente</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --success: #16a34a;
-            --warning: #ca8a04;
-            --danger: #dc2626;
-            --dark: #1e293b;
-            --light: #f8fafc;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f1f5f9; color: var(--dark); padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        header { background: var(--dark); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { margin-bottom: 15px; font-size: 1.2rem; color: var(--dark); border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.9rem; }
-        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s; }
-        button:hover { background: #1d4ed8; }
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #b91c1c; }
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        @media(max-width: 600px) { .dashboard { grid-template-columns: repeat(2, 1fr); } }
-        .dash-box { padding: 15px; border-radius: 6px; color: white; text-align: center; }
-        .bg-blue { background: var(--primary); }
-        .bg-green { background: var(--success); }
-        .bg-yellow { background: var(--warning); }
-        .bg-red { background: var(--danger); }
-        .dash-box h3 { font-size: 1.8rem; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; font-weight: bold; }
-        .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: white; }
-        .badge-ok { background: var(--success); }
-        .badge-alert { background: var(--warning); }
-        .badge-critico { background: var(--danger); }
-        .actions-cell { display: flex; gap: 5px; }
-        .btn-sm { padding: 4px 8px; font-size: 0.8rem; width: auto; }
-    </style>
-</head>
-<body>
+// ==========================================
+// 1. BASE DE DADOS DE EXEMPLO (PRODUTOS)
+// ==========================================
+const inventario = [
+  { id: 1, nome: "Leite Integral 1L", preco: 4.50, quantidade: 50, validade: "2026-10-15", estoqueMinimo: 10, statusPerda: "ok" },
+  { id: 2, nome: "Iogurte Morango", preco: 3.20, quantidade: 0, validade: "2026-09-01", estoqueMinimo: 15, statusPerda: "ok" }, // Ruptura
+  { id: 3, nome: "Queijo Prato kg", preco: 42.00, quantidade: 8, validade: "2026-05-10", estoqueMinimo: 5, statusPerda: "vencido" }, // Perda por validade
+  { id: 4, nome: "Manteiga 200g", preco: 9.80, quantidade: 2, validade: "2026-11-20", estoqueMinimo: 12, statusPerda: "ok" }, // Alerta de estoque baixo
+  { id: 5, nome: "Suco de Uva 1L", preco: 12.50, quantidade: 20, validade: "2026-09-10", estoqueMinimo: 8, statusPerda: "avariado" } // Perda por avaria
+];
 
-<div class="container">
-    <header>
-        <h1>Estoque Inteligente v1.0</h1>
-        <p>Controle de Validade, Ruptura e Perdas</p>
-    </header>
+// ==========================================
+// 2. FUNÇÕES DE PROCESSAMENTO E ANÁLISE
+// ==========================================
 
-    <!-- Indicadores Gerenciais (Dashboard) -->
-    <div class="dashboard">
-        <div class="dash-box bg-blue">
-            <p>Total em Estoque</p>
-            <h3 id="dash-total-itens">0</h3>
-        </div>
-        <div class="dash-box bg-green">
-            <p>Valor Patrimonial</p>
-            <h3 id="dash-valor-total">R$ 0,00</h3>
-        </div>
-        <div class="dash-box bg-yellow">
-            <p>Rupturas (Esgotados)</p>
-            <h3 id="dash-rupturas">0</h3>
-        </div>
-        <div class="dash-box bg-red">
-            <p>Perdas Registradas</p>
-            <h3 id="dash-perdas">R$ 0,00</h3>
-        </div>
-    </div>
+function gerarRelatorioCompleto(produtos) {
+  const dataAtual = new Date();
+  
+  // Métricas do relatório
+  let valorTotalEstoque = 0;
+  let totalProdutosCadastrados = produtos.length;
+  let totalItensFisicos = 0;
+  
+  const rupturas = [];
+  const perdas = [];
+  const alertasEstoqueBaixo = [];
+  const alertasValidadeProxima = [];
 
-    <div class="grid">
-        <!-- Lado Esquerdo: Formulários -->
-        <div>
-            <div class="card">
-                <h2>Cadastrar / Atualizar Produto</h2>
-                <form id="product-form">
-                    <input type="hidden" id="prod-id">
-                    <div class="form-group">
-                        <label>Nome do Produto</label>
-                        <input type="text" id="prod-nome" required placeholder="Ex: Leite Integral 1L">
-                    </div>
-                    <div class="form-group">
-                        <label>Quantidade em Estoque</label>
-                        <input type="number" id="prod-qtd" required min="0" placeholder="Ex: 50">
-                    </div>
-                    <div class="form-group">
-                        <label>Estoque Mínimo (Alerta de Ruptura)</label>
-                        <input type="number" id="prod-min" required min="0" placeholder="Ex: 10">
-                    </div>
-                    <div class="form-group">
-                        <label>Preço de Custo (R$)</label>
-                        <input type="number" id="prod-custo" required step="0.01" min="0" placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Preço de Venda (R$)</label>
-                        <input type="number" id="prod-venda" required step="0.01" min="0" placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Data de Validade</label>
-                        <input type="date" id="prod-validade" required>
-                    </div>
-                    <button type="submit" id="btn-salvar">Salvar Produto</button>
-                    <button type="button" id="btn-cancelar" class="btn-danger" style="display:none; margin-top:5px;">Cancelar Edição</button>
-                </form>
-            </div>
+  produtos.forEach(produto => {
+    const dataValidade = new Date(produto.validade);
+    const diffTempo = dataValidade - dataAtual;
+    const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
 
-            <div class="card">
-                <h2>Registrar Saída / Perda Manual</h2>
-                <form id="perda-form">
-                    <div class="form-group">
-                        <label>Selecionar Produto</label>
-                        <select id="perda-select" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Quantidade</label>
-                        <input type="number" id="perda-qtd" required min="1" placeholder="Ex: 2">
-                    </div>
-                    <div class="form-group">
-                        <label>Motivo</label>
-                        <select id="perda-motivo" required>
-                            <option value="Vendido">Venda Normal</option>
-                            <option value="Vencido">Produto Vencido (Perda)</option>
-                            <option value="Avariado">Avaria/Quebra (Perda)</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-danger">Confirmar Movimentação</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Lado Direito: Tabelas e Relatórios -->
-        <div>
-            <div class="card">
-                <h2>Inventário Atualizado</h2>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Produto</th>
-                                <th>Qtd.</th>
-                                <th>Validade</th>
-                                <th>Status</th>
-                                <th>Preço Venda</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="estoque-table-body">
-                            <!-- Inserido dinamicamente via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Relatório Completo de Performance Financeira</h2>
-                <div id="relatorio-financeiro">
-                    <!-- Gerado dinamicamente -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Inicialização do Banco de Dados Local (localStorage)
-    let produtos = JSON.parse(localStorage.getItem('estoque_produtos')) || [];
-    let perdasFinanceiras = parseFloat(localStorage.getItem('estoque_perdas')) || 0;
-
-    const form = document.getElementById('product-form');
-    const perdaForm = document.getElementById('perda-form');
-
-    // Funções Auxiliares de Data e Moeda
-    const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    
-    function calcularStatus(qtd, min, validadeStr) {
-        const hoje = new Date();
-        hoje.setHours(0,0,0,0);
-        const validade = new Date(validadeStr + 'T00:00:00');
-        
-        const diffTempo = validade - hoje;
-        const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
-
-        if (qtd <= 0) return { texto: 'Ruptura', classe: 'badge-critico' };
-        if (diffDias <= 0) return { texto: 'Vencido', classe: 'badge-critico' };
-        if (diffDias <= 15) return { texto: `Vence em ${diffDias} dias`, classe: 'badge-alert' };
-        if (qtd <= min) return { texto: 'Estoque Baixo', classe: 'badge-alert' };
-        return { texto: 'Regular', classe: 'badge-ok' };
+    // Cômputo de valores de estoque ativo (apenas se não for perda)
+    if (produto.statusPerda === "ok" && produto.quantidade > 0) {
+      valorTotalEstoque += produto.preco * produto.quantidade;
+      totalItensFisicos += produto.quantidade;
     }
 
-    // Renderizar Tabelas e Atualizar Dashboards
-    function renderizarSistema() {
-        const tbody = document.getElementById('estoque-table-body');
-        const selectPerda = document.getElementById('perda-select');
-        tbody.innerHTML = '';
-        selectPerda.innerHTML = '<option value="">-- Escolha um produto --</option>';
+    // 1. Verificação de Ruptura (Falta de estoque)
+    if (produto.quantidade === 0 && produto.statusPerda === "ok") {
+      rupturas.push({
+        id: produto.id,
+        nome: produto.nome,
+        preco: produto.preco
+      });
+    }
 
-        let totalItens = 0;
-        let valorPatrimonialCusto = 0;
-        let valorPatrimonialVenda = 0;
-        let contagemRupturas = 0;
+    // 2. Verificação de Perdas (Vencidos ou Avariados)
+    if (produto.statusPerda !== "ok" || diffDias < 0) {
+      const motivo = diffDias < 0 ? "Vencido" : produto.statusPerda;
+      perdas.push({
+        id: produto.id,
+        nome: produto.nome,
+        quantidadePerdida: produto.quantidade,
+        prejuizo: produto.preco * produto.quantidade,
+        motivo: motivo
+      });
+    }
 
-        produtos.forEach((p, index) => {
-            totalItens += parseInt(p.qtd);
-            valorPatrimonialCusto += (p.qtd * p.custo);
-            valorPatrimonialVenda += (p.qtd * p.venda);
+    // 3. Verificação de Alerta de Estoque Baixo (Abaixo do mínimo, mas maior que zero)
+    if (produto.quantidade > 0 && produto.quantidade <= produto.estoqueMinimo && produto.statusPerda === "ok") {
+      alertasEstoqueBaixo.push({
+        nome: produto.nome,
+        atual: produto.quantidade,
+        minimo: produto.estoqueMinimo
+      });
+    }
+
+    // 4. Verificação de Validade Próxima (Produtos que vencem em até 30 dias e ainda estão válidos)
+    if (diffDias >= 0 && diffDias <= 30 && produto.statusPerda === "ok" && produto.quantidade > 0) {
+      alertasValidadeProxima.push({
+        nome: produto.nome,
+        diasParaVencer: diffDias,
+        quantidade: produto.quantidade
+      });
+    }
+  });
+
+  // Calcular Prejuízo Total
+  const valorTotalPerdas = perdas.reduce((acc, item) => acc + item.prejuizo, 0);
+
+  // ==========================================
+  // 3. EXIBIÇÃO FORMATADA DO RELATÓRIO
+  // ==========================================
+  console.log("=========================================================");
+  console.log("       RELATÓRIO COMPLETO DE GERENCIAMENTO DE ESTOQUE    ");
+  console.log("=========================================================");
+  console.log(`Data do Relatório: ${dataAtual.toLocaleDateString('pt-BR')}`);
+  console.log(`Total de Produtos Cadastrados: ${totalProdutosCadastrados}`);
+  console.log(`Total de Itens Físicos em Estoque: ${totalItensFisicos}`);
+  console.log(`Valor Total do Estoque Ativo: R$ ${valorTotalEstoque.toFixed(2)}`);
+  console.log(`Prejuízo Total com Perdas: R$ ${valorTotalPerdas.toFixed(2)}`);
+  console.log("---------------------------------------------------------");
+
+  console.log("\n❌ RUPTURAS DETECTADAS (Falta de Produto):");
+  if (rupturas.length === 0) console.log("   Nenhuma ruptura registrada.");
+  else rupturas.forEach(r => console.log(`   - [ID ${r.id}] ${r.nome} (Preço de venda: R$ ${r.preco.toFixed(2)})`));
+
+  console.log("\n⚠️ ALERTAS DE ESTOQUE BAIXO:");
+  if (alertasEstoqueBaixo.length === 0) console.log("   Todos os produtos com níveis seguros.");
+  else alertasEstoqueBaixo.forEach(a => console.log(`   - ${a.nome}: Estoque atual (${a.atual}) está abaixo/igual ao mínimo (${a.minimo})`));
+
+  console.log("\n📉 REGISTRO DE PERDAS (Vencidos/Avariados):");
+  if (perdas.length === 0) console.log("   Nenhuma perda registrada.");
+  else perdas.forEach(p => console.log(`   - ${p.nome} | Qtde: ${p.quantidadePerdida} | Motivo: ${p.motivo} | Prejuízo: R$ ${p.prejuizo.toFixed(2)}`));
+
+  console.log("\n⏰ ALERTAS DE VALIDADE PRÓXIMA (Até 30 dias):");
+  if (alertasValidadeProxima.length === 0) console.log("   Nenhum produto próximo do vencimento.");
+  else alertasValidadeProxima.forEach(v => console.log(`   - ${v.nome}: Vence em ${v.diasParaVencer} dias (Quantidade: ${v.quantidade})`));
+  
+  console.log("=========================================================");
+}
+
+// Executar a função com os dados do inventário
+gerarRelatorioCompleto(inventario);
