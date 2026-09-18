@@ -3,167 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Estoque e Validade</title>
+    <title>Sistema de Gestão de Estoque Inteligente</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; margin: 20px; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1, h2 { color: #2c3e50; text-align: center; }
-        
-        /* Formulário */
-        form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; background: #ecf0f1; padding: 15px; border-radius: 6px; }
-        .form-group { display: flex; flex-direction: column; }
-        label { margin-bottom: 5px; font-weight: 6px; font-size: 14px; }
-        input { padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 14px; }
-        button { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: auto; }
-        button:hover { background: #219653; }
-        
-        /* Tabela */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #34495e; color: white; }
-        tr:hover { background-color: #f9f9f9; }
-        
-        /* Alertas de Validade */
-        .vencido { background-color: #ffdddd !important; color: #d63031; font-weight: bold; }
-        .status-vencido { color: #d63031; font-weight: bold; }
-        .status-ok { color: #27ae60; font-weight: bold; }
-        
-        .btn-delete { background: #e74c3c; padding: 5px 10px; font-size: 12px; }
-        .btn-delete:hover { background: #c0392b; }
-        .total-container { text-align: right; margin-top: 15px; font-size: 18px; font-weight: bold; }
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f1f5f9; color: var(--dark); padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: var(--dark); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { margin-bottom: 15px; font-size: 1.2rem; color: var(--dark); border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.9rem; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s; }
+        button:hover { background: #1d4ed8; }
+        .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: #b91c1c; }
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        @media(max-width: 600px) { .dashboard { grid-template-columns: repeat(2, 1fr); } }
+        .dash-box { padding: 15px; border-radius: 6px; color: white; text-align: center; }
+        .bg-blue { background: var(--primary); }
+        .bg-green { background: var(--success); }
+        .bg-yellow { background: var(--warning); }
+        .bg-red { background: var(--danger); }
+        .dash-box h3 { font-size: 1.8rem; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: bold; }
+        .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: white; }
+        .badge-ok { background: var(--success); }
+        .badge-alert { background: var(--warning); }
+        .badge-critico { background: var(--danger); }
+        .actions-cell { display: flex; gap: 5px; }
+        .btn-sm { padding: 4px 8px; font-size: 0.8rem; width: auto; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Controle de Estoque e Validade</h1>
-    
-    <!-- Formulário de Cadastro -->
-    <form id="produto-form">
-        <div class="form-group">
-            <label for="nome">Produto</label>
-            <input type="text" id="nome" required placeholder="Ex: Arroz 5kg">
-        </div>
-        <div class="form-group">
-            <label for="qtd">Quantidade</label>
-            <input type="number" id="qtd" min="0" required placeholder="0">
-        </div>
-        <div class="form-group">
-            <label for="preco">Preço (R\$)</label>
-            <input type="number" id="preco" step="0.01" min="0" required placeholder="0.00">
-        </div>
-        <div class="form-group">
-            <label for="validade">Validade</label>
-            <input type="date" id="validade" required>
-        </div>
-        <button type="submit">Adicionar</button>
-    </form>
+    <header>
+        <h1>Estoque Inteligente v1.0</h1>
+        <p>Controle de Validade, Ruptura e Perdas</p>
+    </header>
 
-    <!-- Tabela de Produtos -->
-    <h2>Produtos em Estoque</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th>Qtd.</th>
-                <th>Preço Un.</th>
-                <th>Total</th>
-                <th>Validade</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-produtos">
-            <!-- Inserido dinamicamente via JS -->
-        </tbody>
-    </table>
+    <!-- Indicadores Gerenciais (Dashboard) -->
+    <div class="dashboard">
+        <div class="dash-box bg-blue">
+            <p>Total em Estoque</p>
+            <h3 id="dash-total-itens">0</h3>
+        </div>
+        <div class="dash-box bg-green">
+            <p>Valor Patrimonial</p>
+            <h3 id="dash-valor-total">R$ 0,00</h3>
+        </div>
+        <div class="dash-box bg-yellow">
+            <p>Rupturas (Esgotados)</p>
+            <h3 id="dash-rupturas">0</h3>
+        </div>
+        <div class="dash-box bg-red">
+            <p>Perdas Registradas</p>
+            <h3 id="dash-perdas">R$ 0,00</h3>
+        </div>
+    </div>
 
-    <div class="total-container">
-        Valor Total do Estoque: <span id="valor-total-estoque">R\$ 0,00</span>
+    <div class="grid">
+        <!-- Lado Esquerdo: Formulários -->
+        <div>
+            <div class="card">
+                <h2>Cadastrar / Atualizar Produto</h2>
+                <form id="product-form">
+                    <input type="hidden" id="prod-id">
+                    <div class="form-group">
+                        <label>Nome do Produto</label>
+                        <input type="text" id="prod-nome" required placeholder="Ex: Leite Integral 1L">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade em Estoque</label>
+                        <input type="number" id="prod-qtd" required min="0" placeholder="Ex: 50">
+                    </div>
+                    <div class="form-group">
+                        <label>Estoque Mínimo (Alerta de Ruptura)</label>
+                        <input type="number" id="prod-min" required min="0" placeholder="Ex: 10">
+                    </div>
+                    <div class="form-group">
+                        <label>Preço de Custo (R$)</label>
+                        <input type="number" id="prod-custo" required step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Preço de Venda (R$)</label>
+                        <input type="number" id="prod-venda" required step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Validade</label>
+                        <input type="date" id="prod-validade" required>
+                    </div>
+                    <button type="submit" id="btn-salvar">Salvar Produto</button>
+                    <button type="button" id="btn-cancelar" class="btn-danger" style="display:none; margin-top:5px;">Cancelar Edição</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Registrar Saída / Perda Manual</h2>
+                <form id="perda-form">
+                    <div class="form-group">
+                        <label>Selecionar Produto</label>
+                        <select id="perda-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade</label>
+                        <input type="number" id="perda-qtd" required min="1" placeholder="Ex: 2">
+                    </div>
+                    <div class="form-group">
+                        <label>Motivo</label>
+                        <select id="perda-motivo" required>
+                            <option value="Vendido">Venda Normal</option>
+                            <option value="Vencido">Produto Vencido (Perda)</option>
+                            <option value="Avariado">Avaria/Quebra (Perda)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-danger">Confirmar Movimentação</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lado Direito: Tabelas e Relatórios -->
+        <div>
+            <div class="card">
+                <h2>Inventário Atualizado</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Qtd.</th>
+                                <th>Validade</th>
+                                <th>Status</th>
+                                <th>Preço Venda</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="estoque-table-body">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Relatório Completo de Performance Financeira</h2>
+                <div id="relatorio-financeiro">
+                    <!-- Gerado dinamicamente -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // Array para armazenar os produtos (salva no LocalStorage para não perder ao atualizar)
-    let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
+    // Inicialização do Banco de Dados Local (localStorage)
+    let produtos = JSON.parse(localStorage.getItem('estoque_produtos')) || [];
+    let perdasFinanceiras = parseFloat(localStorage.getItem('estoque_perdas')) || 0;
 
-    const form = document.getElementById('produto-form');
-    const tabela = document.getElementById('tabela-produtos');
-    const valorTotalEstoqueTxt = document.getElementById('valor-total-estoque');
+    const form = document.getElementById('product-form');
+    const perdaForm = document.getElementById('perda-form');
 
-    // Manipula o envio do formulário
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const novoProduto = {
-            id: Date.now(),
-            nome: document.getElementById('nome').value,
-            quantidade: parseInt(document.getElementById('qtd').value),
-            preco: parseFloat(document.getElementById('preco').value),
-            validade: document.getElementById('validade').value
-        };
-
-        estoque.push(novoProduto);
-        atualizarSistema();
-        form.reset();
-    });
-
-    // Remove um produto pelo ID
-    function deletarProduto(id) {
-        estoque = estoque.filter(produto => produto.id !== id);
-        atualizarSistema();
-    }
-
-    // Formata a data de YYYY-MM-DD para DD/MM/YYYY
-    function formatarData(dataStr) {
-        const [ano, mes, dia] = dataStr.split('-');
-        return `${dia}/${mes}/${ano}`;
-    }
-
-    // Verifica se o produto está vencido
-    function verificarVencimento(dataValidade) {
+    // Funções Auxiliares de Data e Moeda
+    const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    
+    function calcularStatus(qtd, min, validadeStr) {
         const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas as datas
-        const validade = new Date(dataValidade + 'T00:00:00'); // Evita problemas de fuso horário
+        hoje.setHours(0,0,0,0);
+        const validade = new Date(validadeStr + 'T00:00:00');
         
-        return validade < hoje;
+        const diffTempo = validade - hoje;
+        const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+
+        if (qtd <= 0) return { texto: 'Ruptura', classe: 'badge-critico' };
+        if (diffDias <= 0) return { texto: 'Vencido', classe: 'badge-critico' };
+        if (diffDias <= 15) return { texto: `Vence em ${diffDias} dias`, classe: 'badge-alert' };
+        if (qtd <= min) return { texto: 'Estoque Baixo', classe: 'badge-alert' };
+        return { texto: 'Regular', classe: 'badge-ok' };
     }
 
-    // Atualiza a tabela, totais e LocalStorage
-    function atualizarSistema() {
-        tabela.innerHTML = '';
-        let valorTotalGeral = 0;
+    // Renderizar Tabelas e Atualizar Dashboards
+    function renderizarSistema() {
+        const tbody = document.getElementById('estoque-table-body');
+        const selectPerda = document.getElementById('perda-select');
+        tbody.innerHTML = '';
+        selectPerda.innerHTML = '<option value="">-- Escolha um produto --</option>';
 
-        estoque.forEach(produto => {
-            const totalProduto = produto.quantidade * produto.preco;
-            valorTotalGeral += totalProduto;
+        let totalItens = 0;
+        let valorPatrimonialCusto = 0;
+        let valorPatrimonialVenda = 0;
+        let contagemRupturas = 0;
 
-            const isVencido = verificarVencimento(produto.validade);
-            const classeLinha = isVencido ? 'vencido' : '';
-            const statusTexto = isVencido ? '<span class="status-vencido">VENCIDO</span>' : '<span class="status-ok">Em dia</span>';
-
-            const tr = document.createElement('tr');
-            tr.className = classeLinha;
-            tr.innerHTML = `
-                <td>${produto.nome}</td>
-                <td>${produto.quantidade}</td>
-                <td>R$ ${produto.preco.toFixed(2).replace('.', ',')}</td>
-                <td>R$ ${totalProduto.toFixed(2).replace('.', ',')}</td>
-                <td>${formatarData(produto.validade)}</td>
-                <td>${statusTexto}</td>
-                <td><button class="btn-delete" onclick="deletarProduto(${produto.id})">Excluir</button></td>
-            `;
-            tabela.appendChild(tr);
-        });
-
-        valorTotalEstoqueTxt.innerText = `R$ ${valorTotalGeral.toFixed(2).replace('.', ',')}`;
-        localStorage.setItem('estoque', JSON.stringify(estoque));
-    }
-
-    // Inicializa a tabela ao carregar a página
-    atualizarSistema();
-</script>
-
-</body>
-</html>
+        produtos.forEach((p, index) => {
+            totalItens += parseInt(p.qtd);
+            valorPatrimonialCusto += (p.qtd * p.custo);
+            valorPatrimonialVenda += (p.qtd * p.venda);
