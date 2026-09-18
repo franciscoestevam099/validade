@@ -1,31 +1,169 @@
-// Exemplo de produto
-const produto = {
-  nome: "Leite Integral",
-  quantidade: 5,
-  validade: "2026-10-15" // Formato: AAAA-MM-DD
-};
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Estoque e Validade</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; margin: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; text-align: center; }
+        
+        /* Formulário */
+        form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; background: #ecf0f1; padding: 15px; border-radius: 6px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 5px; font-weight: 6px; font-size: 14px; }
+        input { padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 14px; }
+        button { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: auto; }
+        button:hover { background: #219653; }
+        
+        /* Tabela */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #34495e; color: white; }
+        tr:hover { background-color: #f9f9f9; }
+        
+        /* Alertas de Validade */
+        .vencido { background-color: #ffdddd !important; color: #d63031; font-weight: bold; }
+        .status-vencido { color: #d63031; font-weight: bold; }
+        .status-ok { color: #27ae60; font-weight: bold; }
+        
+        .btn-delete { background: #e74c3c; padding: 5px 10px; font-size: 12px; }
+        .btn-delete:hover { background: #c0392b; }
+        .total-container { text-align: right; margin-top: 15px; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-function validarProduto(item) {
-  const dataAtual = new Date();
-  const dataValidade = new Date(item.validade);
-  
-  // Zera as horas para comparar apenas os dias
-  dataAtual.setHours(0, 0, 0, 0);
-  dataValidade.setHours(0, 0, 0, 0);
+<div class="container">
+    <h1>Controle de Estoque e Validade</h1>
+    
+    <!-- Formulário de Cadastro -->
+    <form id="produto-form">
+        <div class="form-group">
+            <label for="nome">Produto</label>
+            <input type="text" id="nome" required placeholder="Ex: Arroz 5kg">
+        </div>
+        <div class="form-group">
+            <label for="qtd">Quantidade</label>
+            <input type="number" id="qtd" min="0" required placeholder="0">
+        </div>
+        <div class="form-group">
+            <label for="preco">Preço (R\$)</label>
+            <input type="number" id="preco" step="0.01" min="0" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+            <label for="validade">Validade</label>
+            <input type="date" id="validade" required>
+        </div>
+        <button type="submit">Adicionar</button>
+    </form>
 
-  // 1. Validação de Quantidade
-  if (item.quantidade <= 0) {
-    return { valido: false, motivo: "Produto fora de estoque." };
-  }
+    <!-- Tabela de Produtos -->
+    <h2>Produtos em Estoque</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Qtd.</th>
+                <th>Preço Un.</th>
+                <th>Total</th>
+                <th>Validade</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-produtos">
+            <!-- Inserido dinamicamente via JS -->
+        </tbody>
+    </table>
 
-  // 2. Validação de Validade
-  if (dataValidade < dataAtual) {
-    return { valido: false, motivo: "Produto vencido." };
-  }
+    <div class="total-container">
+        Valor Total do Estoque: <span id="valor-total-estoque">R\$ 0,00</span>
+    </div>
+</div>
 
-  return { valido: true, motivo: "Produto pronto para venda!" };
-}
+<script>
+    // Array para armazenar os produtos (salva no LocalStorage para não perder ao atualizar)
+    let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
 
-// Executando o teste
-const resultado = validarProduto(produto);
-console.log(resultado.motivo); 
+    const form = document.getElementById('produto-form');
+    const tabela = document.getElementById('tabela-produtos');
+    const valorTotalEstoqueTxt = document.getElementById('valor-total-estoque');
+
+    // Manipula o envio do formulário
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const novoProduto = {
+            id: Date.now(),
+            nome: document.getElementById('nome').value,
+            quantidade: parseInt(document.getElementById('qtd').value),
+            preco: parseFloat(document.getElementById('preco').value),
+            validade: document.getElementById('validade').value
+        };
+
+        estoque.push(novoProduto);
+        atualizarSistema();
+        form.reset();
+    });
+
+    // Remove um produto pelo ID
+    function deletarProduto(id) {
+        estoque = estoque.filter(produto => produto.id !== id);
+        atualizarSistema();
+    }
+
+    // Formata a data de YYYY-MM-DD para DD/MM/YYYY
+    function formatarData(dataStr) {
+        const [ano, mes, dia] = dataStr.split('-');
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    // Verifica se o produto está vencido
+    function verificarVencimento(dataValidade) {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas as datas
+        const validade = new Date(dataValidade + 'T00:00:00'); // Evita problemas de fuso horário
+        
+        return validade < hoje;
+    }
+
+    // Atualiza a tabela, totais e LocalStorage
+    function atualizarSistema() {
+        tabela.innerHTML = '';
+        let valorTotalGeral = 0;
+
+        estoque.forEach(produto => {
+            const totalProduto = produto.quantidade * produto.preco;
+            valorTotalGeral += totalProduto;
+
+            const isVencido = verificarVencimento(produto.validade);
+            const classeLinha = isVencido ? 'vencido' : '';
+            const statusTexto = isVencido ? '<span class="status-vencido">VENCIDO</span>' : '<span class="status-ok">Em dia</span>';
+
+            const tr = document.createElement('tr');
+            tr.className = classeLinha;
+            tr.innerHTML = `
+                <td>${produto.nome}</td>
+                <td>${produto.quantidade}</td>
+                <td>R$ ${produto.preco.toFixed(2).replace('.', ',')}</td>
+                <td>R$ ${totalProduto.toFixed(2).replace('.', ',')}</td>
+                <td>${formatarData(produto.validade)}</td>
+                <td>${statusTexto}</td>
+                <td><button class="btn-delete" onclick="deletarProduto(${produto.id})">Excluir</button></td>
+            `;
+            tabela.appendChild(tr);
+        });
+
+        valorTotalEstoqueTxt.innerText = `R$ ${valorTotalGeral.toFixed(2).replace('.', ',')}`;
+        localStorage.setItem('estoque', JSON.stringify(estoque));
+    }
+
+    // Inicializa a tabela ao carregar a página
+    atualizarSistema();
+</script>
+
+</body>
+</html>
