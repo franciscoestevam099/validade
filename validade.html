@@ -1,43 +1,42 @@
-function validarQuantidade(quantidade, estoqueDisponivel = Infinity) {
-  // Converte para número caso venha de um input de texto
-  const qtd = Number(quantidade);
+<form id="produtoForm">
+  <label for="quantidade">Quantidade (Estoque máximo: 20):</label>
+  <input type="number" id="quantidade" min="1" max="20" value="1">
+  
+  <label for="validade">Data de Validade:</label>
+  <input type="date" id="validade">
+  
+  <button type="submit">Salvar Produto</button>
+</form>
 
-  // 1. Verifica se é um número válido e inteiro
-  if (isNaN(qtd) || !Number.isInteger(qtd)) {
-    return { valido: false, erro: "A quantidade deve ser um número inteiro." };
-  }
-
-  // 2. Verifica se é maior que zero
-  if (qtd <= 0) {
-    return { valido: false, erro: "A quantidade deve ser maior que zero." };
-  }
-
-  // 3. Verifica se há estoque suficiente (opcional)
-  if (qtd > estoqueDisponivel) {
-    return { valido: false, erro: `Estoque insuficiente. Disponível: ${estoqueDisponivel}` };
-  }
-
-  // Se passar em tudo
-  return { valido: true, quantidade: qtd };
-}
-
-// --- Exemplos de uso ---
-console.log(validarQuantidade(3));          // { valido: true, quantidade: 3 }
-console.log(validarQuantidade("5"));        // { valido: true, quantidade: 5 }
-console.log(validarQuantidade(2.5));        // { valido: false, erro: "A quantidade..." }
-console.log(validarQuantidade(-1));         // { valido: false, erro: "A quantidade deve ser maior que zero." }
-console.log(validarQuantidade(10, 5));      // { valido: false, erro: "Estoque insuficiente. Disponível: 5" }
-const inputQtd = document.getElementById('quantidade-produto');
-const estoqueAtual = 10; // Exemplo de limite
-
-function finalizarCompra() {
-  const validacao = validarQuantidade(inputQtd.value, estoqueAtual);
-
-  if (!validacao.valido) {
-    alert(validacao.erro);
-    inputQtd.focus();
-    return;
-  }
-
-  console.log(`Sucesso! Adicionando ${validacao.quantidade} itens ao carrinho.`);
-}
+<script>
+  const form = document.getElementById('produtoForm');
+  
+  form.addEventListener('submit', function(event) {
+    const qtdInput = document.getElementById('quantidade');
+    const validadeInput = document.getElementById('validade');
+    
+    const quantidade = parseInt(qtdInput.value);
+    const maxEstoque = parseInt(qtdInput.max);
+    const minEstoque = parseInt(qtdInput.min);
+    
+    // Validação da Quantidade
+    if (quantidade < minEstoque || quantidade > maxEstoque) {
+      alert(`A quantidade deve estar entre ${minEstoque} e ${maxEstoque}.`);
+      event.preventDefault(); // Impede o envio do formulário
+      return;
+    }
+    
+    // Validação da Data de Validade
+    const dataValidade = new Date(validadeInput.value);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas o dia
+    
+    if (dataValidade < hoje) {
+      alert('A data de validade não pode estar vencida!');
+      event.preventDefault();
+      return;
+    }
+    
+    alert('Produto validado com sucesso!');
+  });
+</script>
