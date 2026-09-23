@@ -1,116 +1,43 @@
-// ==========================================
-// 1. BASE DE DADOS DE EXEMPLO (PRODUTOS)
-// ==========================================
-const inventario = [
-  { id: 1, nome: "Leite Integral 1L", preco: 4.50, quantidade: 50, validade: "2026-10-15", estoqueMinimo: 10, statusPerda: "ok" },
-  { id: 2, nome: "Iogurte Morango", preco: 3.20, quantidade: 0, validade: "2026-09-01", estoqueMinimo: 15, statusPerda: "ok" }, // Ruptura
-  { id: 3, nome: "Queijo Prato kg", preco: 42.00, quantidade: 8, validade: "2026-05-10", estoqueMinimo: 5, statusPerda: "vencido" }, // Perda por validade
-  { id: 4, nome: "Manteiga 200g", preco: 9.80, quantidade: 2, validade: "2026-11-20", estoqueMinimo: 12, statusPerda: "ok" }, // Alerta de estoque baixo
-  { id: 5, nome: "Suco de Uva 1L", preco: 12.50, quantidade: 20, validade: "2026-09-10", estoqueMinimo: 8, statusPerda: "avariado" } // Perda por avaria
-];
+function validarQuantidade(quantidade, estoqueDisponivel = Infinity) {
+  // Converte para número caso venha de um input de texto
+  const qtd = Number(quantidade);
 
-// ==========================================
-// 2. FUNÇÕES DE PROCESSAMENTO E ANÁLISE
-// ==========================================
+  // 1. Verifica se é um número válido e inteiro
+  if (isNaN(qtd) || !Number.isInteger(qtd)) {
+    return { valido: false, erro: "A quantidade deve ser um número inteiro." };
+  }
 
-function gerarRelatorioCompleto(produtos) {
-  const dataAtual = new Date();
-  
-  // Métricas do relatório
-  let valorTotalEstoque = 0;
-  let totalProdutosCadastrados = produtos.length;
-  let totalItensFisicos = 0;
-  
-  const rupturas = [];
-  const perdas = [];
-  const alertasEstoqueBaixo = [];
-  const alertasValidadeProxima = [];
+  // 2. Verifica se é maior que zero
+  if (qtd <= 0) {
+    return { valido: false, erro: "A quantidade deve ser maior que zero." };
+  }
 
-  produtos.forEach(produto => {
-    const dataValidade = new Date(produto.validade);
-    const diffTempo = dataValidade - dataAtual;
-    const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+  // 3. Verifica se há estoque suficiente (opcional)
+  if (qtd > estoqueDisponivel) {
+    return { valido: false, erro: `Estoque insuficiente. Disponível: ${estoqueDisponivel}` };
+  }
 
-    // Cômputo de valores de estoque ativo (apenas se não for perda)
-    if (produto.statusPerda === "ok" && produto.quantidade > 0) {
-      valorTotalEstoque += produto.preco * produto.quantidade;
-      totalItensFisicos += produto.quantidade;
-    }
-
-    // 1. Verificação de Ruptura (Falta de estoque)
-    if (produto.quantidade === 0 && produto.statusPerda === "ok") {
-      rupturas.push({
-        id: produto.id,
-        nome: produto.nome,
-        preco: produto.preco
-      });
-    }
-
-    // 2. Verificação de Perdas (Vencidos ou Avariados)
-    if (produto.statusPerda !== "ok" || diffDias < 0) {
-      const motivo = diffDias < 0 ? "Vencido" : produto.statusPerda;
-      perdas.push({
-        id: produto.id,
-        nome: produto.nome,
-        quantidadePerdida: produto.quantidade,
-        prejuizo: produto.preco * produto.quantidade,
-        motivo: motivo
-      });
-    }
-
-    // 3. Verificação de Alerta de Estoque Baixo (Abaixo do mínimo, mas maior que zero)
-    if (produto.quantidade > 0 && produto.quantidade <= produto.estoqueMinimo && produto.statusPerda === "ok") {
-      alertasEstoqueBaixo.push({
-        nome: produto.nome,
-        atual: produto.quantidade,
-        minimo: produto.estoqueMinimo
-      });
-    }
-
-    // 4. Verificação de Validade Próxima (Produtos que vencem em até 30 dias e ainda estão válidos)
-    if (diffDias >= 0 && diffDias <= 30 && produto.statusPerda === "ok" && produto.quantidade > 0) {
-      alertasValidadeProxima.push({
-        nome: produto.nome,
-        diasParaVencer: diffDias,
-        quantidade: produto.quantidade
-      });
-    }
-  });
-
-  // Calcular Prejuízo Total
-  const valorTotalPerdas = perdas.reduce((acc, item) => acc + item.prejuizo, 0);
-
-  // ==========================================
-  // 3. EXIBIÇÃO FORMATADA DO RELATÓRIO
-  // ==========================================
-  console.log("=========================================================");
-  console.log("       RELATÓRIO COMPLETO DE GERENCIAMENTO DE ESTOQUE    ");
-  console.log("=========================================================");
-  console.log(`Data do Relatório: ${dataAtual.toLocaleDateString('pt-BR')}`);
-  console.log(`Total de Produtos Cadastrados: ${totalProdutosCadastrados}`);
-  console.log(`Total de Itens Físicos em Estoque: ${totalItensFisicos}`);
-  console.log(`Valor Total do Estoque Ativo: R$ ${valorTotalEstoque.toFixed(2)}`);
-  console.log(`Prejuízo Total com Perdas: R$ ${valorTotalPerdas.toFixed(2)}`);
-  console.log("---------------------------------------------------------");
-
-  console.log("\n❌ RUPTURAS DETECTADAS (Falta de Produto):");
-  if (rupturas.length === 0) console.log("   Nenhuma ruptura registrada.");
-  else rupturas.forEach(r => console.log(`   - [ID ${r.id}] ${r.nome} (Preço de venda: R$ ${r.preco.toFixed(2)})`));
-
-  console.log("\n⚠️ ALERTAS DE ESTOQUE BAIXO:");
-  if (alertasEstoqueBaixo.length === 0) console.log("   Todos os produtos com níveis seguros.");
-  else alertasEstoqueBaixo.forEach(a => console.log(`   - ${a.nome}: Estoque atual (${a.atual}) está abaixo/igual ao mínimo (${a.minimo})`));
-
-  console.log("\n📉 REGISTRO DE PERDAS (Vencidos/Avariados):");
-  if (perdas.length === 0) console.log("   Nenhuma perda registrada.");
-  else perdas.forEach(p => console.log(`   - ${p.nome} | Qtde: ${p.quantidadePerdida} | Motivo: ${p.motivo} | Prejuízo: R$ ${p.prejuizo.toFixed(2)}`));
-
-  console.log("\n⏰ ALERTAS DE VALIDADE PRÓXIMA (Até 30 dias):");
-  if (alertasValidadeProxima.length === 0) console.log("   Nenhum produto próximo do vencimento.");
-  else alertasValidadeProxima.forEach(v => console.log(`   - ${v.nome}: Vence em ${v.diasParaVencer} dias (Quantidade: ${v.quantidade})`));
-  
-  console.log("=========================================================");
+  // Se passar em tudo
+  return { valido: true, quantidade: qtd };
 }
 
-// Executar a função com os dados do inventário
-gerarRelatorioCompleto(inventario);
+// --- Exemplos de uso ---
+console.log(validarQuantidade(3));          // { valido: true, quantidade: 3 }
+console.log(validarQuantidade("5"));        // { valido: true, quantidade: 5 }
+console.log(validarQuantidade(2.5));        // { valido: false, erro: "A quantidade..." }
+console.log(validarQuantidade(-1));         // { valido: false, erro: "A quantidade deve ser maior que zero." }
+console.log(validarQuantidade(10, 5));      // { valido: false, erro: "Estoque insuficiente. Disponível: 5" }
+const inputQtd = document.getElementById('quantidade-produto');
+const estoqueAtual = 10; // Exemplo de limite
+
+function finalizarCompra() {
+  const validacao = validarQuantidade(inputQtd.value, estoqueAtual);
+
+  if (!validacao.valido) {
+    alert(validacao.erro);
+    inputQtd.focus();
+    return;
+  }
+
+  console.log(`Sucesso! Adicionando ${validacao.quantidade} itens ao carrinho.`);
+}
