@@ -1,3 +1,21 @@
+// Recupera o estoque salvo ou inicia um array vazio
+let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
+
+// Função para adicionar ou atualizar produto
+function adicionarProduto(nome, quantidade) {
+    let produto = estoque.find(p => p.nome === nome);
+    
+    if (produto) {
+        produto.quantidade += quantidade; // Atualiza a quantidade
+    } else {
+        estoque.push({ nome: nome, quantidade: quantidade }); // Adiciona novo
+    }
+    
+    localStorage.setItem('estoque', JSON.stringify(estoque));
+}
+
+// Exemplo de uso:
+adicionarProduto('Camiseta', 10);
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
