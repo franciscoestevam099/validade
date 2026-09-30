@@ -1,27 +1,9 @@
-// Recupera o estoque salvo ou inicia um array vazio
-let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
-
-// Função para adicionar ou atualizar produto
-function adicionarProduto(nome, quantidade) {
-    let produto = estoque.find(p => p.nome === nome);
-    
-    if (produto) {
-        produto.quantidade += quantidade; // Atualiza a quantidade
-    } else {
-        estoque.push({ nome: nome, quantidade: quantidade }); // Adiciona novo
-    }
-    
-    localStorage.setItem('estoque', JSON.stringify(estoque));
-}
-
-// Exemplo de uso:
-adicionarProduto('Camiseta', 10);
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Estoque e Validade</title>
+    <title>Controle de Estoque</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,75 +12,48 @@ adicionarProduto('Camiseta', 10);
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 600px;
             margin: auto;
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
         }
-        h1, h2 {
-            color: #333;
-        }
-        form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+        h2 { text-align: center; color: #333; }
         .form-group {
-            display: flex;
-            flex-direction: column;
+            margin-bottom: 15px;
         }
-        .form-group.full {
-            grid-column: span 2;
-        }
-        label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
         input {
+            width: 100%;
             padding: 8px;
+            box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
         button {
-            grid-column: span 2;
-            padding: 10px;
             background-color: #28a745;
             color: white;
+            padding: 10px;
             border: none;
+            width: 100%;
             border-radius: 4px;
             font-size: 16px;
             cursor: pointer;
         }
-        button:hover {
-            background-color: #218838;
-        }
+        button:hover { background-color: #218838; }
         table {
             width: 100%;
-            border-collapse: collapse;
             margin-top: 20px;
+            border-collapse: collapse;
         }
         th, td {
-            padding: 10px;
             border: 1px solid #ddd;
-            text-align: left;
+            padding: 10px;
+            text-align: center;
         }
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-        .vencido {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .proximo-vencer {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        .btn-del {
+        th { background-color: #007bff; color: white; }
+        .btn-delete {
             background-color: #dc3545;
             color: white;
             border: none;
@@ -106,167 +61,96 @@ adicionarProduto('Camiseta', 10);
             border-radius: 3px;
             cursor: pointer;
         }
-        .btn-del:hover {
-            background-color: #c82333;
-        }
+        .btn-delete:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Controle de Estoque</h1>
+    <h2>Controle de Estoque</h2>
     
-    <form id="productForm">
-        <div class="form-group">
-            <label for="name">Nome do Produto:</label>
-            <input type="text" id="name" required>
-        </div>
-        <div class="form-group">
-            <label for="quantity">Quantidade:</label>
-            <input type="number" id="quantity" min="1" required>
-        </div>
-        <div class="form-group full">
-            <label for="expiryDate">Data de Validade:</label>
-            <input type="date" id="expiryDate" required>
-        </div>
-        <button type="submit">Adicionar Produto</button>
-    </form>
+    <div class="form-group">
+        <label for="nome">Nome do Produto:</label>
+        <input type="text" id="nome" placeholder="Ex: Caneta">
+    </div>
+    
+    <div class="form-group">
+        <label for="quantidade">Quantidade:</label>
+        <input type="number" id="quantidade" placeholder="Ex: 10">
+    </div>
+    
+    <button onclick="adicionarProduto()">Adicionar ao Estoque</button>
 
-    <h2>Lista de Produtos</h2>
     <table>
         <thead>
             <tr>
                 <th>Produto</th>
                 <th>Quantidade</th>
-                <th>Validade</th>
-                <th>Status</th>
                 <th>Ações</th>
             </tr>
         </thead>
-        <tbody id="productTableBody">
-            <!-- Os produtos cadastrados aparecem aqui -->
+        <tbody id="tabela-corpo">
+            <!-- Os dados entram aqui via JavaScript -->
         </tbody>
     </table>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', loadProducts);
-    const form = document.getElementById('productForm');
-    const tableBody = document.getElementById('productTableBody');
+    // Carrega o estoque salvo ou inicia um array vazio
+    let estoque = JSON.parse(localStorage.getItem('estoque')) || [];
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const name = document.getElementById('name').value;
-        const quantity = document.getElementById('quantity').value;
-        const expiryDate = document.getElementById('expiryDate').value;
-
-        const product = {
-            id: Date.now(),
-            name,
-            quantity,
-            expiryDate
-        };
-
-        saveProduct(product);
-        form.reset();
-        loadProducts();
-    });
-
-    function getProducts() {
-        return JSON.parse(localStorage.getItem('products')) || [];
+    function salvarEAtualizar() {
+        localStorage.setItem('estoque', JSON.stringify(estoque));
+        renderizarEstoque();
     }
 
-    function saveProduct(product) {
-        const products = getProducts();
-        products.push(product);
-        localStorage.setItem('products', JSON.stringify(products));
-    }
+    function adicionarProduto() {
+        const nome = document.getElementById('nome').value.trim();
+        const quantidade = parseInt(document.getElementById('quantidade').value);
 
-    function deleteProduct(id) {
-        let products = getProducts();
-        products = products.filter(p => p.id !== id);
-        localStorage.setItem('products', JSON.stringify(products));
-        loadProducts();
-    }
-
-    function checkStatus(expiryDate) {
-        const today = new Date();
-        const exp = new Date(expiryDate + 'T00:00:00');
-        const diffTime = exp - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 0) {
-            return { text: 'Vencido', class: 'vencido' };
-        } else if (diffDays <= 7) {
-            return { text: `Vence em ${diffDays} dia(s)`, class: 'proximo-vencer' };
-        } else {
-            return { text: 'No prazo', class: '' };
+        if (nome === '' || isNaN(quantidade) || quantidade <= 0) {
+            alert('Preencha o nome e uma quantidade válida!');
+            return;
         }
+
+        // Verifica se o produto já existe para somar a quantidade
+        const produtoExistente = estoque.find(item => item.nome.toLowerCase() === nome.toLowerCase());
+        
+        if (produtoExistente) {
+            produtoExistente.quantidade += quantidade;
+        } else {
+            estoque.push({ id: Date.now(), nome, quantidade });
+        }
+
+        document.getElementById('nome').value = '';
+        document.getElementById('quantidade').value = '';
+        
+        salvarEAtualizar();
     }
 
-    function loadProducts() {
-        tableBody.innerHTML = '';
-        const products = getProducts();
+    function removerProduto(id) {
+        estoque = estoque.filter(item => item.id !== id);
+        salvarEAtualizar();
+    }
 
-        products.forEach(p => {
-            const status = checkStatus(p.expiryDate);
-            const row = document.createElement('tr');
-            row.className = status.class;
+    function renderizarEstoque() {
+        const tbody = document.getElementById('tabela-corpo');
+        tbody.innerHTML = '';
 
-            row.innerHTML = `
-                <td>${p.name}</td>
-                <td>${p.quantity}</td>
-                <td>${p.expiryDate.split('-').reverse().join('/')}</td>
-                <td>${status.text}</td>
-                <td><button class="btn-del" onclick="deleteProduct(${p.id})">Excluir</button></td>
+        estoque.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.nome}</td>
+                <td>${item.quantidade}</td>
+                <td><button class="btn-delete" onclick="removerProduto(${item.id})">Excluir</button></td>
             `;
-            tableBody.appendChild(row);
+            tbody.appendChild(tr);
         });
     }
+
+    // Executa ao carregar a página
+    renderizarEstoque();
 </script>
 
 </body>
 </html>
-<form id="produtoForm">
-  <label for="quantidade">Quantidade (Estoque máximo: 20):</label>
-  <input type="number" id="quantidade" min="1" max="20" value="1">
-  
-  <label for="validade">Data de Validade:</label>
-  <input type="date" id="validade">
-  
-  <button type="submit">Salvar Produto</button>
-</form>
-
-<script>
-  const form = document.getElementById('produtoForm');
-  
-  form.addEventListener('submit', function(event) {
-    const qtdInput = document.getElementById('quantidade');
-    const validadeInput = document.getElementById('validade');
-    
-    const quantidade = parseInt(qtdInput.value);
-    const maxEstoque = parseInt(qtdInput.max);
-    const minEstoque = parseInt(qtdInput.min);
-    
-    // Validação da Quantidade
-    if (quantidade < minEstoque || quantidade > maxEstoque) {
-      alert(`A quantidade deve estar entre ${minEstoque} e ${maxEstoque}.`);
-      event.preventDefault(); // Impede o envio do formulário
-      return;
-    }
-    
-    // Validação da Data de Validade
-    const dataValidade = new Date(validadeInput.value);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); // Zera as horas para comparar apenas o dia
-    
-    if (dataValidade < hoje) {
-      alert('A data de validade não pode estar vencida!');
-      event.preventDefault();
-      return;
-    }
-    
-    alert('Produto validado com sucesso!');
-  });
-</script>
