@@ -1,177 +1,293 @@
-<!doctype html>
-<html lang="pt-br">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/png" href="assets/img/favicon.ico">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>::PEPS - Estoque::</title>
-    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
-    <meta name="viewport" content="width=device-width" />
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="assets/css/animate.min.css" rel="stylesheet" />
-    <link href="assets/css/light-bootstrap-dashboard.css?v=1.4.0" rel="stylesheet" />
-    <link href="assets/css/demo.css" rel="stylesheet" />
-    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,300' rel='stylesheet' type='text/css'>
-    <link href="assets/css/pe-icon-7-stroke.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Validade, Estoque e Cadastro</title>
     <style>
-        .page-item a {cursor: pointer;}
-        .page-item a.active {background-color: #dedede;}
+        :root {
+            --bg-color: #f4f6f9;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --success: #28a745;
+            --primary: #007bff;
+            --border-color: #cccccc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { margin: 0; font-size: 24px; color: #222; }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background-color: #0056b3; }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: #218838; }
+
+        /* Layout em Duas Colunas (Formulário + Listagem) */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        /* Formulário de Cadastro */
+        .form-container {
+            background: var(--card-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .form-container h2 { margin-top: 0; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .calc-preview {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* Dashboard Cards */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--card-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 5px solid #ccc;
+        }
+
+        .card.card-vencido { border-left-color: var(--danger); }
+        .card.card-alerta { border-left-color: var(--warning); }
+        .card.card-perda { border-left-color: #6c757d; }
+
+        .card h3 { margin: 0 0 5px 0; font-size: 12px; color: #777; text-transform: uppercase; }
+        .card p { margin: 0; font-size: 22px; font-weight: bold; }
+
+        /* Tabela de Dados */
+        .table-container {
+            background: var(--card-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        .table-container h2 { margin-top: 0; font-size: 18px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        th { background-color: #f8f9fa; color: #555; }
+
+        /* Badges de Status */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .badge-danger { background-color: #f8d7da; color: var(--danger); }
+        .badge-warning { background-color: #fff3cd; color: #856404; }
+        .badge-info { background-color: #e2e3e5; color: #383d41; }
+
+        /* Estilos de Impressão */
+        @media print {
+            body { background: white; padding: 0; }
+            .btn, .form-container, header h1 { display: none; }
+            .table-container, .card { box-shadow: none; border: 1px solid #ddd; }
+            .main-layout { grid-template-columns: 1fr; }
+            .container { max-width: 100%; }
+            header::after { content: "RELATÓRIO GERENCIAL DE VALIDADE E PERDAS"; font-size: 20px; font-weight: bold; }
+        }
     </style>
 </head>
-
 <body>
-    <div class="wrapper">
-        <div class="sidebar" data-color="purple" data-image="">
-            <div class="sidebar-wrapper">
-                <div class="logo">
-                    <a href="#" class="simple-text">
-                        PEPS
-                    </a>
-                </div>
-                <ul class="nav">
-                    <li>
-                        <a href="dashboard.html">
-                            <i class="pe-7s-graph"></i>
-                            <p>Dashboard</p>
-                        </a>
-                    </li>
 
-                    <li>
-                        <a href="cadastro.html">
-                            <i class="pe-7s-note2"></i>
-                            <p>Cadastro de produtos</p>
-                        </a>
-                    </li>
-                    <li class="active">
-                        <a href="estoque.html">
-                            <i class="pe-7s-news-paper"></i>
-                            <p>Estoque</p>
-                        </a>
-                    </li>
-                    </li>
-                    <li class="active-pro">
-                        <a href="upgrade.html">
-                            <i class="pe-7s-settings"></i>
-                            <p>Configurações</p>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="sobre.html">
-                            <i class="pe-7s-bell"></i>
-                            <p>Sobre</p>
-                        </a>
-                </ul>
-            </div>
+<div class="container">
+    <header>
+        <h1>Gestão de Estoque e Validades</h1>
+        <button class="btn" onclick="window.print()">Imprimir Relatório</button>
+    </header>
+
+    <div class="main-layout">
+        <!-- Coluna Esquerda: Formulário de Cadastro -->
+        <div class="form-container">
+            <h2>Cadastrar Novo Produto</h2>
+            <form id="form-produto" onsubmit="adicionarProduto(event)">
+                <div class="form-group">
+                    <label for="nome">Nome do Produto</label>
+                    <input type="text" id="nome" required placeholder="Ex: Presunto Cozido 1kg">
+                </div>
+                <div class="form-group">
+                    <label for="quantidade">Quantidade em Estoque</label>
+                    <input type="number" id="quantidade" min="0" required placeholder="0" oninput="calcularTotalPreview()">
+                </div>
+                <div class="form-group">
+                    <label for="validade">Data de Validade</label>
+                    <input type="date" id="validade" required>
+                </div>
+                <div class="form-group">
+                    <label for="preco">Preço de Custo (R\$)</label>
+                    <input type="number" id="preco" step="0.01" min="0" required placeholder="0.00" oninput="calcularTotalPreview()">
+                </div>
+                
+                <!-- Cálculo dinâmico em tempo de digitação -->
+                <div class="calc-preview" id="preview-custo">
+                    Valor de Custo Total: R\$ 0,00
+                </div>
+                <br>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Salvar no Sistema</button>
+            </form>
         </div>
-        <div class="main-panel">
-            <nav class="navbar navbar-default navbar-fixed">
-                <div class="container-fluid">
-                    <div class="navbar-header">
-                        <button type="button" class="navbar-toggle" data-toggle="collapse"
-                            data-target="#navigation-example-2">
-                            <span class="sr-only">Toggle navigation</span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                            <span class="icon-bar"></span>
-                        </button>
-                        <a class="navbar-brand" href="#">Estoque</a>
-                    </div>
-                    <div class="collapse navbar-collapse">
-                        <ul class="nav navbar-nav navbar-right">
-                            <li>
-                                <a href="#">
-                                    <p>Log out</p>
-                                </a>
-                            </li>
-                            <li class="separator hidden-lg hidden-md"></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
 
-            <div class="content">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="header">
-                                    <h4 class="title">Lista de produtos</h4>
-                                    <h5 class="text-right">
-                                        Produtos: <span id="qtde-products"> 0</span>
-                                    </h5>
-                                    <p class="category">Fique atento ao prazo de validade!</p>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <button class="btn btn-sm btn-fill btn-round btn-success">
-                                                </button>
-                                                Válido
-                                            </tr>
-                                            <tr>
-                                                <button class="btn btn-sm btn-fill btn-round btn-secondary">
-                                                </button>
-                                                Vencido
-                                            </tr>
-                                        </thead>
-                                    </table>
-                                </div>
-                                <div class="content table-responsive table-full-width">
-                                    <table class="table table-hover table-striped">
-                                        <thead>
-                                            <th>Status</th>
-                                            <th>Descrição</th>
-                                            <th>Marca</th>
-                                            <th>Custo</th>
-                                            <th>Revenda</th>
-                                            <th>Qtde</th>
-                                            <th>Un.Medida</th>
-                                            <th>Validade</th>
-                                            <th>Codigo</th>
-                                            <th>Ações</th>
-                                        </thead>
-                                        <tbody id="res"></tbody>
-                                    </table>
-                                    <div aria-label="Page navigation example" style="text-align: center;">
-                                        <div class="pagination">
-                                          <li class="page-item"><a class="first page-link"> << </a></li>
-                                          <li class="page-item"><a class="prev page-link"> < </a></li>
-                                          <li class="page page-item"></li>
-                                          <li class="page-item"><a class="next page-link"> > </a></li>
-                                          <li class="page-item"><a class="last page-link"> >> </a></li>
-                                        </div>
-                                      </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Coluna Direita: Dashboard + Tabela -->
+        <div>
+            <!-- Resumo Gerencial -->
+            <div class="dashboard">
+                <div class="card card-vencido">
+                    <h3>Itens Vencidos</h3>
+                    <p id="qtd-vencidos">0</p>
+                </div>
+                <div class="card card-alerta">
+                    <h3>Vencem em 30 dias</h3>
+                    <p id="qtd-alerta">0</p>
+                </div>
+                <div class="card card-alerta">
+                    <h3>Estoque Baixo</h3>
+                    <p id="qtd-baixo">0</p>
+                </div>
+                <div class="card card-perda">
+                    <h3>Perda Financeira (Vencidos)</h3>
+                    <p id="valor-perda">R\$ 0,00</p>
                 </div>
             </div>
 
-            <footer class="footer">
-                <div class="container-fluid">
-                    <nav class="pull-left">
-                        <ul>
-                            <li>
-                                <a href="#">
-                                    Home
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                    <p class="copyright pull-right">
-                        &copy;
-                        <script>document.write(new Date().getFullYear())</script> <a href="#">PEPS</a>
-                    </p>
-                </div>
-            </footer>
+            <!-- Tabela de Alertas -->
+            <div class="table-container">
+                <h2>Produtos sob Monitoramento (Alertas ou Próximos)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Qtd</th>
+                            <th>Validade</th>
+                            <th>Custo Unit.</th>
+                            <th>Valor Total</th>
+                            <th>Situação / Alertas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-produtos">
+                        <!-- Inserido dinamicamente via JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</body>
-<script type="module" src="assets/js/paginate.js"></script>
-<script type="module" src="assets/js/cadastro.js" type="text/javascript"></script>
-<script src="assets/js/jquery.3.2.1.min.js" type="text/javascript"></script>
-<script src="assets/js/bootstrap.min.js" type="text/javascript"></script>
-<script src="assets/js/bootstrap-notify.js"></script>
-<script src="assets/js/light-bootstrap-dashboard.js?v=1.4.0"></script>
-</html>
+</div>
+
+<script>
+    // Data Base de Simulação do Sistema (Hoje: 02/10/2026)
+    const dataAtual = new Date('2026-10-02');
+
+    // Lista inicial de produtos cadastrados
+    const produtos = [
+        { nome: 'Leite Integral 1L', quantidade: 5, validade: '2026-10-05', custo: 4.50 },
+        { nome: 'Iogurte Natural', quantidade: 20, validade: '2026-09-20', custo: 2.20 },
+        { nome: 'Arroz Tipo 1 5kg', quantidade: 3, validade: '2027-05-15', custo: 22.00 },
+        { nome: 'Feijão Carioca 1kg', quantidade: 50, validade: '2027-02-10', custo: 8.00 },
+        { nome: 'Margarina 500g', quantidade: 7, validade: '2026-10-18', custo: 5.90 }
+    ];
+
+    function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Função que calcula o Valor Total em tempo real no formulário
+    function calcularTotalPreview() {
+        const qtd = parseFloat(document.getElementById('quantidade').value) || 0;
+        const preco = parseFloat(document.getElementById('preco').value) || 0;
+        const total = qtd * preco;
+        document.getElementById('preview-custo').innerText = `Valor de Custo Total: ${formatarMoeda(total)}`;
+;
